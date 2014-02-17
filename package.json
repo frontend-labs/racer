@@ -1,0 +1,25 @@
+{
+  "name": "racer",
+  "description": "A little game of cars",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt-contrib-requirejs": "~0.4.0",
+    "grunt": "~0.4.2",
+    "grunt-cli": "0.1.x",
+    "grunt-exec": "~0.4.0",
+    "grunt-replace": "~0.6.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-watch": "~0.4.3",
+    "grunt-contrib-coffee": "~0.8.2",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-uglify": "~0.3.2",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-htmlmin": "~0.1.3",
+    "grunt-contrib-imagemin": "~0.5.0",
+    "grunt-contrib-yuidoc": "~0.5.0",
+    "grunt-contrib-jasmine": "~0.5.2",
+    "grunt-template-jasmine-requirejs": "0.1.8",
+    "grunt-contrib-connect": "~0.3.0"
+  }
+}

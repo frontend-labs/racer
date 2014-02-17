@@ -1,0 +1,7 @@
+{
+	"coffee_source_path": "src/",
+	"js_path": "build/js/",
+	"js_compiled_source_path": "build/js/compiled/",
+	"js_source_path": "build/js/src/",
+	"js_min_source_path": "build/js/min/"
+}
