@@ -12,7 +12,7 @@ define(function() {
       return DOM.get(id).innerHTML = html;
     },
     on: function(ele, type, fn, capture) {
-      return DOM.get(ele).addEventListener(type, fn, capture);
+      DOM.get(ele).addEventListener(type, fn, capture);
     },
     un: function(ele, type, fn, capture) {
       return DOM.get(ele).removeEventListener(type, fn, capture);

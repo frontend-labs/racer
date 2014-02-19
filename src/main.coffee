@@ -1,11 +1,13 @@
 define([
-        'lib/dom',
-        'lib/utils',
-        'lib/game',
+        'lib/dom'
+        'lib/utils'
+        'lib/render'
+        'lib/game'
         'lib/stats'
-        'settings/key',
-        'settings/background'],
-    (DOM, Util, Game, Stats, KEY, BACKGROUND)->
+        'settings/key'
+        'settings/background'
+        'settings/colors'],
+    (DOM, Util, Render, Game, Stats, KEY, BACKGROUND, COLORS)->
 
         fps = 60
         step = 1/fps
@@ -70,7 +72,7 @@ define([
                 speed = Util.accelerate speed, offRoadDecel, dt
 
             playerX = Util.limit playerX, -2, 2
-            speed = UTil.limit speed, 0, maxSpeed
+            speed = Util.limit speed, 0, maxSpeed
             return
 
 
@@ -98,7 +100,7 @@ define([
                     camX: playerX * roadWidth
                     camY: camHeight
                     camZ: position - (if segment.looped? trackLength else 0)
-                    camDepth: cameraDepth 
+                    camDepth: camDepth 
                     width: width
                     height: height
                     roadWidth: roadWidth
@@ -121,7 +123,7 @@ define([
                              projectPrms.height, 
                              projectPrms.roadWidth
 
-                if segment.p1.camera.z <= cameraDepth or segment.p2.screen.y >= maxy
+                if segment.p1.camera.z <= camDepth or segment.p2.screen.y >= maxy
                     continue
                 
                 Render.segment ctx, width, lanes,
@@ -139,7 +141,7 @@ define([
                 indexDrawDistance++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,
-                            cameraDepth/playerZ,
+                            camDepth/playerZ,
                             width/2,
                             height,
                             speed * (if keyLeft? then -1 else if keyRight? then  1 else 0),
@@ -160,12 +162,12 @@ define([
                     index: indexSegments
                     p1: 
                         world:
-                            z: n * segmentLength
+                            z: indexSegments * segmentLength
                         camera: {}
                         screen: {}
                     p2: 
                         world:
-                            z: ( n + 1 ) * segmentLength
+                            z: ( indexSegments + 1 ) * segmentLength
                         camera: {}
                         screen: {}
                     color: if ( Math.floor( indexSegments / rumbleLength) % 2 )?  then COLORS.DARK else COLORS.LIGHT
@@ -204,6 +206,31 @@ define([
                 { keys: [KEY.UP,    KEY.W], mode: 'up',   action: ()-> keyFaster = false; },
                 { keys: [KEY.DOWN,  KEY.S], mode: 'up',   action: ()-> keySlower = false; }
             ]
+            ready:(images)->
+                background = images[0]
+                sprites = images[1]
+                reset()
+                return
         })
+
+        reset = (opts)->
+            console.log('reset!')
+            options = opts or {}
+            canvas.width = width = Util.toInt(options.width, width)
+            canvas.height = height = Util.toInt(options.height, height)
+            lanes = Util.toInt(options.lanes, lanes)
+            roadWidth = Util.toInt(options.roadWidth, roadWidth)
+            camHeight = Util.toInt(options.camHeight, camHeight)
+            drawDistance = Util.toInt(options.drawDistance, drawDistance)
+            fogDensity = Util.toInt(options.fogDensity, fogDensity)
+            fieldOfView = Util.toInt(options.fieldOfView, fieldOfView)
+            segmentLength = Util.toInt(options.segmentLength, segmentLength)
+            rumbleLength = Util.toInt(options.rumbleLength, rumbleLength)
+            camDepth = 1 / Math.tan( (fieldOfView/ 2) * Math.PI / 180)
+            playerZ = camHeight * camDepth
+            resolution = height / 480
+
+            if( segments.length is 0 or options.segmentLength or options.rumbleLength)
+                resetRoad()
         return
 )

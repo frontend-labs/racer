@@ -7,47 +7,56 @@ define([
             run:(opts)->
                 console.log('run!')
                 console.log('opts.imgs', opts.imgs)
-                #Game.loadImgs opts.imgs, (image)->
-                    #opts.ready(image)
-                Game.setKeyListener(opts.keys)
-                canvas = opts.canvas
-                update = opts.update
-                render = opts.render
-                step = opts.step
-                stats = opts.stats
-                now = null
-                last = Util.timestamp()
-                dt = 0
-                gdt = 0
-                frame = ()->
-                    console.log('frame')
-                    now = Util.timestamp()
-                    dt = Math.min(1, (now - last) / 1000)
-                    gdt = gdt + dt
-                    while gdt < step
-                        gdt = gdt - step
-                        update(step)
-                    render()
-                    stats.update()
-                    last = now
-                    console.log 'last', last
-                    requestAnimationFrame(frame, canvas)
-                frame()
+
+                Game.loadImgs opts.imgs, (image)->
+
+                    console.log('cargado::', image)
+
+                    opts.ready(image)
+
+                    Game.setKeyListener(opts.keys)
+
+                    canvas = opts.canvas
+                    update = opts.update
+                    render = opts.render
+                    step = opts.step
+                    stats = opts.stats
+                    now = null
+                    last = Util.timestamp()
+                    dt = 0
+                    gdt = 0
+                    frame = ()->
+                        console.log('frame')
+                        now = Util.timestamp()
+                        dt = Math.min(1, (now - last) / 1000)
+                        gdt = gdt + dt
+                        while gdt > step
+                            gdt = gdt - step
+                            update(step)
+                        render()
+                        stats.update()
+                        last = now
+                        console.log 'last', last
+                        requestAnimationFrame(frame, canvas)
+                    frame()
                 #Game.playMusic()
 
             loadImgs:(names, callback)->
                 result = []
                 count = names.length
-                i = 0
+                console.log 'names::', names
                 onload = ()->
+                    console.log 'funciona onload?'
                     if --count is 0
                         callback(result)
-                    while i < names.length
-                        name = names[i]
-                        result[i] = document.createElement('img')
-                        DOM.on(result[i], 'load', onload)
-                        result[i].src = "images/#{name}.png"
-                        i++
+                    return
+
+                for name in names by 1
+                    result[_i] = document.createElement 'img'
+                    console.log 'result[_i]', result[_i]
+                    DOM.on result[_i], 'load', onload
+                    result[_i].src = "images/#{name}.png"
+                return
 
             setKeyListener:(keys)->
                 onKey = (keyCode, mode)->

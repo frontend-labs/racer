@@ -1,5 +1,5 @@
-define(['lib/dom', 'lib/utils', 'lib/game', 'lib/stats', 'settings/key', 'settings/background'], function(DOM, Util, Game, Stats, KEY, BACKGROUND) {
-  var accel, background, breaking, camDepth, camHeight, canvas, ctx, decel, drawDistance, fieldOfView, findSegment, fogDensity, fps, height, keyFaster, keyLeft, keyRight, keySlower, lanes, maxSpeed, offRoadDecel, offRoadLimit, playerX, playerZ, position, render, resetRoad, resolution, roadWidth, rumbleLength, segmentLength, segments, speed, sprites, stats, step, trackLength, update, width;
+define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings/key', 'settings/background', 'settings/colors'], function(DOM, Util, Render, Game, Stats, KEY, BACKGROUND, COLORS) {
+  var accel, background, breaking, camDepth, camHeight, canvas, ctx, decel, drawDistance, fieldOfView, findSegment, fogDensity, fps, height, keyFaster, keyLeft, keyRight, keySlower, lanes, maxSpeed, offRoadDecel, offRoadLimit, playerX, playerZ, position, render, reset, resetRoad, resolution, roadWidth, rumbleLength, segmentLength, segments, speed, sprites, stats, step, trackLength, update, width;
   fps = 60;
   step = 1 / fps;
   width = 1024;
@@ -57,7 +57,7 @@ define(['lib/dom', 'lib/utils', 'lib/game', 'lib/stats', 'settings/key', 'settin
       speed = Util.accelerate(speed, offRoadDecel, dt);
     }
     playerX = Util.limit(playerX, -2, 2);
-    speed = UTil.limit(speed, 0, maxSpeed);
+    speed = Util.limit(speed, 0, maxSpeed);
   };
   render = function() {
     var baseSegment, indexDrawDistance, maxy, projectPrms, segment;
@@ -77,21 +77,21 @@ define(['lib/dom', 'lib/utils', 'lib/game', 'lib/stats', 'settings/key', 'settin
         camX: playerX * roadWidth,
         camY: camHeight,
         camZ: position - ((typeof segment.looped === "function" ? segment.looped(trackLength) : void 0) ? void 0 : 0),
-        camDepth: cameraDepth,
+        camDepth: camDepth,
         width: width,
         height: height,
         roadWidth: roadWidth
       };
       Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
       Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-      if (segment.p1.camera.z <= cameraDepth || segment.p2.screen.y >= maxy) {
+      if (segment.p1.camera.z <= camDepth || segment.p2.screen.y >= maxy) {
         continue;
       }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
       maxy = segment.p2.screen.y;
       indexDrawDistance++;
     }
-    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, cameraDepth / playerZ, width / 2, height, speed * (keyLeft != null ? -1 : keyRight != null ? 1 : 0), 0);
+    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft != null ? -1 : keyRight != null ? 1 : 0), 0);
   };
   resetRoad = function() {
     var indexRumble, indexSegments;
@@ -104,14 +104,14 @@ define(['lib/dom', 'lib/utils', 'lib/game', 'lib/stats', 'settings/key', 'settin
         index: indexSegments,
         p1: {
           world: {
-            z: n * segmentLength
+            z: indexSegments * segmentLength
           },
           camera: {},
           screen: {}
         },
         p2: {
           world: {
-            z: (n + 1) * segmentLength
+            z: (indexSegments + 1) * segmentLength
           },
           camera: {},
           screen: {}
@@ -188,6 +188,32 @@ define(['lib/dom', 'lib/utils', 'lib/game', 'lib/stats', 'settings/key', 'settin
           return keySlower = false;
         }
       }
-    ]
+    ],
+    ready: function(images) {
+      background = images[0];
+      sprites = images[1];
+      reset();
+    }
   });
+  reset = function(opts) {
+    var options;
+    console.log('reset!');
+    options = opts || {};
+    canvas.width = width = Util.toInt(options.width, width);
+    canvas.height = height = Util.toInt(options.height, height);
+    lanes = Util.toInt(options.lanes, lanes);
+    roadWidth = Util.toInt(options.roadWidth, roadWidth);
+    camHeight = Util.toInt(options.camHeight, camHeight);
+    drawDistance = Util.toInt(options.drawDistance, drawDistance);
+    fogDensity = Util.toInt(options.fogDensity, fogDensity);
+    fieldOfView = Util.toInt(options.fieldOfView, fieldOfView);
+    segmentLength = Util.toInt(options.segmentLength, segmentLength);
+    rumbleLength = Util.toInt(options.rumbleLength, rumbleLength);
+    camDepth = 1 / Math.tan((fieldOfView / 2) * Math.PI / 180);
+    playerZ = camHeight * camDepth;
+    resolution = height / 480;
+    if (segments.length === 0 || options.segmentLength || options.rumbleLength) {
+      return resetRoad();
+    }
+  };
 });

@@ -2,56 +2,58 @@ define(['lib/stats', 'lib/dom', 'lib/utils'], function(Stats, DOM, Util) {
   var Game;
   Game = {
     run: function(opts) {
-      var canvas, dt, frame, gdt, last, now, render, stats, step, update;
       console.log('run!');
       console.log('opts.imgs', opts.imgs);
-      Game.setKeyListener(opts.keys);
-      canvas = opts.canvas;
-      update = opts.update;
-      render = opts.render;
-      step = opts.step;
-      stats = opts.stats;
-      now = null;
-      last = Util.timestamp();
-      dt = 0;
-      gdt = 0;
-      frame = function() {
-        console.log('frame');
-        now = Util.timestamp();
-        dt = Math.min(1, (now - last) / 1000);
-        gdt = gdt + dt;
-        while (gdt < step) {
-          gdt = gdt - step;
-          update(step);
-        }
-        render();
-        stats.update();
-        last = now;
-        console.log('last', last);
-        return requestAnimationFrame(frame, canvas);
-      };
-      return frame();
+      return Game.loadImgs(opts.imgs, function(image) {
+        var canvas, dt, frame, gdt, last, now, render, stats, step, update;
+        console.log('cargado::', image);
+        opts.ready(image);
+        Game.setKeyListener(opts.keys);
+        canvas = opts.canvas;
+        update = opts.update;
+        render = opts.render;
+        step = opts.step;
+        stats = opts.stats;
+        now = null;
+        last = Util.timestamp();
+        dt = 0;
+        gdt = 0;
+        frame = function() {
+          console.log('frame');
+          now = Util.timestamp();
+          dt = Math.min(1, (now - last) / 1000);
+          gdt = gdt + dt;
+          while (gdt > step) {
+            gdt = gdt - step;
+            update(step);
+          }
+          render();
+          stats.update();
+          last = now;
+          console.log('last', last);
+          return requestAnimationFrame(frame, canvas);
+        };
+        return frame();
+      });
     },
     loadImgs: function(names, callback) {
-      var count, i, onload, result;
+      var count, name, onload, result, _i, _len;
       result = [];
       count = names.length;
-      i = 0;
-      return onload = function() {
-        var name, _results;
+      console.log('names::', names);
+      onload = function() {
+        console.log('funciona onload?');
         if (--count === 0) {
           callback(result);
         }
-        _results = [];
-        while (i < names.length) {
-          name = names[i];
-          result[i] = document.createElement('img');
-          DOM.on(result[i], 'load', onload);
-          result[i].src = "images/" + name + ".png";
-          _results.push(i++);
-        }
-        return _results;
       };
+      for (_i = 0, _len = names.length; _i < _len; _i += 1) {
+        name = names[_i];
+        result[_i] = document.createElement('img');
+        console.log('result[_i]', result[_i]);
+        DOM.on(result[_i], 'load', onload);
+        result[_i].src = "images/" + name + ".png";
+      }
     },
     setKeyListener: function(keys) {
       var onKey;

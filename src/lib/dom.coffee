@@ -8,6 +8,7 @@ define(->
 
         on: (ele, type, fn, capture) ->
             DOM.get(ele).addEventListener(type, fn, capture)
+            return
 
         un: (ele, type, fn, capture) ->
             DOM.get(ele).removeEventListener(type, fn, capture)
