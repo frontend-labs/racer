@@ -31,7 +31,7 @@ define(['lib/stats', 'lib/dom', 'lib/utils'], function(Stats, DOM, Util) {
           stats.update();
           last = now;
           console.log('last', last);
-          return requestAnimationFrame(frame, canvas);
+          requestAnimationFrame(frame, canvas);
         };
         return frame();
       });

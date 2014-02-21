@@ -69,6 +69,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     Render.background(ctx, background, width, height, BACKGROUND.HILLS);
     Render.background(ctx, background, width, height, BACKGROUND.TREES);
     indexDrawDistance = 0;
+    segment = null;
     while (indexDrawDistance < drawDistance) {
       segment = segments[(baseSegment.index + indexDrawDistance) % segments.length];
       segment.looped = segments.index < baseSegment.index;
@@ -76,7 +77,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
       projectPrms = {
         camX: playerX * roadWidth,
         camY: camHeight,
-        camZ: position - ((typeof segment.looped === "function" ? segment.looped(trackLength) : void 0) ? void 0 : 0),
+        camZ: position - (segment.looped ? trackLength : 0),
         camDepth: camDepth,
         width: width,
         height: height,

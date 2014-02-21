@@ -60,7 +60,7 @@ define(->
 
             p.screen.scale = camDepth/p.camera.z
             p.screen.x = Math.round((width/2) + (p.screen.scale * p.camera.x * width/2))
-            p.screen.y = Math.round((height/2) + (p.screen.scale * p.camera.y * height/2))
+            p.screen.y = Math.round((height/2) - (p.screen.scale * p.camera.y * height/2))
             p.screen.w = Math.round(( p.screen.scale * roadWith * width/2 ))
             return
 

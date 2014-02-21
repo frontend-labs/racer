@@ -91,6 +91,7 @@ define([
             Render.background ctx, background, width, height, BACKGROUND.TREES
 
             indexDrawDistance = 0
+            segment = null
             while indexDrawDistance < drawDistance
                 segment = segments[(baseSegment.index + indexDrawDistance) % segments.length]
                 segment.looped = segments.index < baseSegment.index
@@ -99,7 +100,7 @@ define([
                 projectPrms =
                     camX: playerX * roadWidth
                     camY: camHeight
-                    camZ: position - (if segment.looped? trackLength else 0)
+                    camZ: position - (if segment.looped then trackLength else 0)
                     camDepth: camDepth 
                     width: width
                     height: height
@@ -123,8 +124,8 @@ define([
                              projectPrms.height, 
                              projectPrms.roadWidth
 
-                if segment.p1.camera.z <= camDepth or segment.p2.screen.y >= maxy
-                    continue
+                #if segment.p1.camera.z <= camDepth or segment.p2.screen.y >= maxy
+                    #continue
                 
                 Render.segment ctx, width, lanes,
                                 segment.p1.screen.x,
@@ -137,7 +138,6 @@ define([
                                 segment.color
 
                 maxy = segment.p2.screen.y
-
                 indexDrawDistance++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,

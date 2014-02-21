@@ -38,6 +38,7 @@ define([
                         last = now
                         console.log 'last', last
                         requestAnimationFrame(frame, canvas)
+                        return
                     frame()
                 #Game.playMusic()
 
