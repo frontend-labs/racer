@@ -123,10 +123,10 @@ define([
                              projectPrms.width, 
                              projectPrms.height, 
                              projectPrms.roadWidth
-
                 #if segment.p1.camera.z <= camDepth or segment.p2.screen.y >= maxy
                     #continue
                 
+                console.log 'segment', segment
                 Render.segment ctx, width, lanes,
                                 segment.p1.screen.x,
                                 segment.p1.screen.y,
@@ -144,7 +144,7 @@ define([
                             camDepth/playerZ,
                             width/2,
                             height,
-                            speed * (if keyLeft? then -1 else if keyRight? then  1 else 0),
+                            speed * (if keyLeft then -1 else if keyRight then  1 else 0),
                             0
             return
 
@@ -170,7 +170,7 @@ define([
                             z: ( indexSegments + 1 ) * segmentLength
                         camera: {}
                         screen: {}
-                    color: if ( Math.floor( indexSegments / rumbleLength) % 2 )?  then COLORS.DARK else COLORS.LIGHT
+                    color: if ( Math.floor( indexSegments / rumbleLength) % 2 ) then COLORS.DARK else COLORS.LIGHT
                 indexSegments++
 
             segments[findSegment(playerZ).index + 2].color = COLORS.START

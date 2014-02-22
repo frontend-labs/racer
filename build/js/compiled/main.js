@@ -85,14 +85,12 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
       };
       Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
       Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-      if (segment.p1.camera.z <= camDepth || segment.p2.screen.y >= maxy) {
-        continue;
-      }
+      console.log('segment', segment);
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
       maxy = segment.p2.screen.y;
       indexDrawDistance++;
     }
-    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft != null ? -1 : keyRight != null ? 1 : 0), 0);
+    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft ? -1 : keyRight ? 1 : 0), 0);
   };
   resetRoad = function() {
     var indexRumble, indexSegments;
@@ -117,7 +115,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
           camera: {},
           screen: {}
         },
-        color: (Math.floor(indexSegments / rumbleLength) % 2) != null ? COLORS.DARK : COLORS.LIGHT
+        color: Math.floor(indexSegments / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
       });
       indexSegments++;
     }
