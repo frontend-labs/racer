@@ -35,7 +35,7 @@ define([
         position = 0
         speed = 0
         maxSpeed = segmentLength/step
-        accel = maxSpeed / 5
+        accel = maxSpeed/5
         breaking = -maxSpeed
         decel = -maxSpeed/5
         offRoadDecel = -maxSpeed/2
@@ -47,12 +47,10 @@ define([
         keySlower = false
 
 
-        console.log('canvas', canvas)
         ###################################################
         #Update the game world
         ###################################################
         update = (dt)->
-            console.log('update!')
             pos = Util.increase(position, dt * speed, trackLength)
             dx = dt * 2 * (speed/maxSpeed)
 
@@ -80,7 +78,6 @@ define([
         #Render the game world
         ###################################################
         render = ()->
-            console.log('render')
             baseSegment = findSegment position
             maxy = height
 
@@ -94,50 +91,50 @@ define([
             segment = null
             while indexDrawDistance < drawDistance
                 segment = segments[(baseSegment.index + indexDrawDistance) % segments.length]
-                segment.looped = segments.index < baseSegment.index
-                segment.fog = Util.exponentialFog(indexDrawDistance/drawDistance, fogDensity)
 
-                projectPrms =
-                    camX: playerX * roadWidth
-                    camY: camHeight
-                    camZ: position - (if segment.looped then trackLength else 0)
-                    camDepth: camDepth 
-                    width: width
-                    height: height
-                    roadWidth: roadWidth
+                if not( segment.p1.camera.z <= camDepth ) or not( segment.p2.screen.y >= maxy )
+                    segment.looped = segments.index < baseSegment.index
+                    segment.fog = Util.exponentialFog(indexDrawDistance/drawDistance, fogDensity)
 
-                Util.project segment.p1, 
-                             projectPrms.camX, 
-                             projectPrms.camY, 
-                             projectPrms.camZ,
-                             projectPrms.camDepth, 
-                             projectPrms.width, 
-                             projectPrms.height, 
-                             projectPrms.roadWidth
+                    projectPrms =
+                        camX: playerX * roadWidth
+                        camY: camHeight
+                        camZ: position - (if segment.looped then trackLength else 0)
+                        camDepth: camDepth 
+                        width: width
+                        height: height
+                        roadWidth: roadWidth
 
-                Util.project segment.p2, 
-                             projectPrms.camX, 
-                             projectPrms.camY, 
-                             projectPrms.camZ,
-                             projectPrms.camDepth, 
-                             projectPrms.width, 
-                             projectPrms.height, 
-                             projectPrms.roadWidth
-                #if segment.p1.camera.z <= camDepth or segment.p2.screen.y >= maxy
-                    #continue
-                
-                console.log 'segment', segment
-                Render.segment ctx, width, lanes,
-                                segment.p1.screen.x,
-                                segment.p1.screen.y,
-                                segment.p1.screen.w,
-                                segment.p2.screen.x,
-                                segment.p2.screen.y,
-                                segment.p2.screen.w,
-                                segment.fog,
-                                segment.color
+                    Util.project segment.p1, 
+                                 projectPrms.camX, 
+                                 projectPrms.camY, 
+                                 projectPrms.camZ,
+                                 projectPrms.camDepth, 
+                                 projectPrms.width, 
+                                 projectPrms.height, 
+                                 projectPrms.roadWidth
 
-                maxy = segment.p2.screen.y
+                    Util.project segment.p2, 
+                                 projectPrms.camX, 
+                                 projectPrms.camY, 
+                                 projectPrms.camZ,
+                                 projectPrms.camDepth, 
+                                 projectPrms.width, 
+                                 projectPrms.height, 
+                                 projectPrms.roadWidth
+
+                    
+                    Render.segment ctx, width, lanes,
+                                    segment.p1.screen.x,
+                                    segment.p1.screen.y,
+                                    segment.p1.screen.w,
+                                    segment.p2.screen.x,
+                                    segment.p2.screen.y,
+                                    segment.p2.screen.w,
+                                    segment.fog,
+                                    segment.color
+
+                    maxy = segment.p2.screen.y
                 indexDrawDistance++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,
@@ -152,7 +149,6 @@ define([
         #Build Road Geometry
         ###################################################
         resetRoad = ()->
-            console.log 'resetRoad'
             segments = []
             indexSegments = 0
             indexRumble = 0
@@ -214,7 +210,6 @@ define([
         })
 
         reset = (opts)->
-            console.log('reset!')
             options = opts or {}
             canvas.width = width = Util.toInt(options.width, width)
             canvas.height = height = Util.toInt(options.height, height)
@@ -232,5 +227,6 @@ define([
 
             if( segments.length is 0 or options.segmentLength or options.rumbleLength)
                 resetRoad()
+            return
         return
 )

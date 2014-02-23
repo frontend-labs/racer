@@ -35,10 +35,8 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   keyRight = false;
   keyFaster = false;
   keySlower = false;
-  console.log('canvas', canvas);
   update = function(dt) {
     var dx, pos;
-    console.log('update!');
     pos = Util.increase(position, dt * speed, trackLength);
     dx = dt * 2 * (speed / maxSpeed);
     if (keyLeft) {
@@ -61,7 +59,6 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   };
   render = function() {
     var baseSegment, indexDrawDistance, maxy, projectPrms, segment;
-    console.log('render');
     baseSegment = findSegment(position);
     maxy = height;
     ctx.clearRect(0, 0, width, height);
@@ -72,29 +69,29 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     segment = null;
     while (indexDrawDistance < drawDistance) {
       segment = segments[(baseSegment.index + indexDrawDistance) % segments.length];
-      segment.looped = segments.index < baseSegment.index;
-      segment.fog = Util.exponentialFog(indexDrawDistance / drawDistance, fogDensity);
-      projectPrms = {
-        camX: playerX * roadWidth,
-        camY: camHeight,
-        camZ: position - (segment.looped ? trackLength : 0),
-        camDepth: camDepth,
-        width: width,
-        height: height,
-        roadWidth: roadWidth
-      };
-      Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-      Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-      console.log('segment', segment);
-      Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
-      maxy = segment.p2.screen.y;
+      if (!(segment.p1.camera.z <= camDepth) || !(segment.p2.screen.y >= maxy)) {
+        segment.looped = segments.index < baseSegment.index;
+        segment.fog = Util.exponentialFog(indexDrawDistance / drawDistance, fogDensity);
+        projectPrms = {
+          camX: playerX * roadWidth,
+          camY: camHeight,
+          camZ: position - (segment.looped ? trackLength : 0),
+          camDepth: camDepth,
+          width: width,
+          height: height,
+          roadWidth: roadWidth
+        };
+        Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
+        Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
+        Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
+        maxy = segment.p2.screen.y;
+      }
       indexDrawDistance++;
     }
     Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft ? -1 : keyRight ? 1 : 0), 0);
   };
   resetRoad = function() {
     var indexRumble, indexSegments;
-    console.log('resetRoad');
     segments = [];
     indexSegments = 0;
     indexRumble = 0;
@@ -196,7 +193,6 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   });
   reset = function(opts) {
     var options;
-    console.log('reset!');
     options = opts || {};
     canvas.width = width = Util.toInt(options.width, width);
     canvas.height = height = Util.toInt(options.height, height);
@@ -212,7 +208,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     playerZ = camHeight * camDepth;
     resolution = height / 480;
     if (segments.length === 0 || options.segmentLength || options.rumbleLength) {
-      return resetRoad();
+      resetRoad();
     }
   };
 });

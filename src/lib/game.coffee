@@ -5,12 +5,7 @@ define([
     (Stats, DOM, Util)->
         Game =
             run:(opts)->
-                console.log('run!')
-                console.log('opts.imgs', opts.imgs)
-
                 Game.loadImgs opts.imgs, (image)->
-
-                    console.log('cargado::', image)
 
                     opts.ready(image)
 
@@ -26,7 +21,6 @@ define([
                     dt = 0
                     gdt = 0
                     frame = ()->
-                        console.log('frame')
                         now = Util.timestamp()
                         dt = Math.min(1, (now - last) / 1000)
                         gdt = gdt + dt
@@ -36,25 +30,22 @@ define([
                         render()
                         stats.update()
                         last = now
-                        console.log 'last', last
                         requestAnimationFrame(frame, canvas)
                         return
                     frame()
+                return
                 #Game.playMusic()
 
             loadImgs:(names, callback)->
                 result = []
                 count = names.length
-                console.log 'names::', names
                 onload = ()->
-                    console.log 'funciona onload?'
                     if --count is 0
                         callback(result)
                     return
 
                 for name in names by 1
                     result[_i] = document.createElement 'img'
-                    console.log 'result[_i]', result[_i]
                     DOM.on result[_i], 'load', onload
                     result[_i].src = "images/#{name}.png"
                 return
@@ -65,11 +56,13 @@ define([
                     while i < keys.length
                         item = keys[i]
                         item.mode = item.mode or 'up'
-                        if item.key is keyCode or item.keys and item.keys.indexOf(keyCode) >= 0
+                        if ( item.key is keyCode ) or ( item.keys and item.keys.indexOf(keyCode) >= 0 )
                             if item.mode is mode
                                 item.action.call()
-                    DOM.on(document, 'keydown', (ev)-> onKey(ev.keyCode, 'down'))
-                    DOM.on(document, 'keyup', (ev)-> onKey(ev.keyCode, 'up'))
+                        i++
+                DOM.on(document, 'keydown', (ev)-> onKey(ev.keyCode, 'down'))
+                DOM.on(document, 'keyup', (ev)-> onKey(ev.keyCode, 'up'))
+                return
 
             stats: (parentId, id)->
                 result = new Stats()
@@ -107,6 +100,7 @@ define([
                     DOM.storage.muted = music.muted = !music.muted
                     DOM.toggleClassName('mute', 'on', music.muted)
                 )
+                return
 
         return Game
 )
