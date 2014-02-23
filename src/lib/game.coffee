@@ -33,6 +33,7 @@ define([
                         requestAnimationFrame(frame, canvas)
                         return
                     frame()
+                    return
                 return
                 #Game.playMusic()
 

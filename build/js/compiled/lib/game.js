@@ -28,7 +28,7 @@ define(['lib/stats', 'lib/dom', 'lib/utils'], function(Stats, DOM, Util) {
           last = now;
           requestAnimationFrame(frame, canvas);
         };
-        return frame();
+        frame();
       });
     },
     loadImgs: function(names, callback) {

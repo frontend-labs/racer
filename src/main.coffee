@@ -28,7 +28,7 @@ define([
         fieldOfView = 100
         camHeight = 1000
         camDepth = null
-        drawDistance = 300
+        drawDistance = 100
         playerX = 0
         playerZ = null
         fogDensity = 5
@@ -51,8 +51,13 @@ define([
         #Update the game world
         ###################################################
         update = (dt)->
-            pos = Util.increase(position, dt * speed, trackLength)
+            position = Util.increase(position, dt * speed, trackLength)
             dx = dt * 2 * (speed/maxSpeed)
+
+            console.log 'keyLeft', keyLeft
+            console.log 'keyRight', keyRight
+            console.log 'keyFaster', keyFaster
+            console.log 'keySlower', keySlower
 
             if keyLeft
                 playerX = playerX - dx
@@ -66,7 +71,7 @@ define([
             else
                 speed = Util.accelerate speed, decel, dt
 
-            if (playerX < -1) or (playerX > 1) and (speed > offRoadLimit)
+            if ( (playerX < -1) or (playerX > 1) ) and (speed > offRoadLimit)
                 speed = Util.accelerate speed, offRoadDecel, dt
 
             playerX = Util.limit playerX, -2, 2
@@ -92,49 +97,50 @@ define([
             while indexDrawDistance < drawDistance
                 segment = segments[(baseSegment.index + indexDrawDistance) % segments.length]
 
-                if not( segment.p1.camera.z <= camDepth ) or not( segment.p2.screen.y >= maxy )
-                    segment.looped = segments.index < baseSegment.index
-                    segment.fog = Util.exponentialFog(indexDrawDistance/drawDistance, fogDensity)
+                #if not( segment.p1.camera.z <= camDepth ) or not( segment.p2.screen.y >= maxy )
 
-                    projectPrms =
-                        camX: playerX * roadWidth
-                        camY: camHeight
-                        camZ: position - (if segment.looped then trackLength else 0)
-                        camDepth: camDepth 
-                        width: width
-                        height: height
-                        roadWidth: roadWidth
+                segment.looped = segments.index < baseSegment.index
+                segment.fog = Util.exponentialFog(indexDrawDistance/drawDistance, fogDensity)
 
-                    Util.project segment.p1, 
-                                 projectPrms.camX, 
-                                 projectPrms.camY, 
-                                 projectPrms.camZ,
-                                 projectPrms.camDepth, 
-                                 projectPrms.width, 
-                                 projectPrms.height, 
-                                 projectPrms.roadWidth
+                projectPrms =
+                    camX: playerX * roadWidth
+                    camY: camHeight
+                    camZ: position - (if segment.looped then trackLength else 0)
+                    camDepth: camDepth 
+                    width: width
+                    height: height
+                    roadWidth: roadWidth
 
-                    Util.project segment.p2, 
-                                 projectPrms.camX, 
-                                 projectPrms.camY, 
-                                 projectPrms.camZ,
-                                 projectPrms.camDepth, 
-                                 projectPrms.width, 
-                                 projectPrms.height, 
-                                 projectPrms.roadWidth
+                Util.project segment.p1, 
+                             projectPrms.camX, 
+                             projectPrms.camY, 
+                             projectPrms.camZ,
+                             projectPrms.camDepth, 
+                             projectPrms.width, 
+                             projectPrms.height, 
+                             projectPrms.roadWidth
+
+                Util.project segment.p2, 
+                             projectPrms.camX, 
+                             projectPrms.camY, 
+                             projectPrms.camZ,
+                             projectPrms.camDepth, 
+                             projectPrms.width, 
+                             projectPrms.height, 
+                             projectPrms.roadWidth
 
                     
-                    Render.segment ctx, width, lanes,
-                                    segment.p1.screen.x,
-                                    segment.p1.screen.y,
-                                    segment.p1.screen.w,
-                                    segment.p2.screen.x,
-                                    segment.p2.screen.y,
-                                    segment.p2.screen.w,
-                                    segment.fog,
-                                    segment.color
+                Render.segment ctx, width, lanes,
+                                segment.p1.screen.x,
+                                segment.p1.screen.y,
+                                segment.p1.screen.w,
+                                segment.p2.screen.x,
+                                segment.p2.screen.y,
+                                segment.p2.screen.w,
+                                segment.fog,
+                                segment.color
 
-                    maxy = segment.p2.screen.y
+                maxy = segment.p2.screen.y
                 indexDrawDistance++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,
@@ -173,7 +179,7 @@ define([
             segments[findSegment(playerZ).index + 3].color = COLORS.START
 
             while indexRumble < rumbleLength
-                segments[segments.length - 1 - indexRumble].color = COLORS.FINISH
+                segments[( segments.length-1-indexRumble )].color = COLORS.FINISH
                 indexRumble++
 
             trackLength = segments.length * segmentLength
@@ -193,14 +199,14 @@ define([
             step: step
             imgs: ["background", "sprites"]
             keys: [
-                { keys: [KEY.LEFT,  KEY.A], mode: 'down', action: ()-> keyLeft   = true; },
-                { keys: [KEY.RIGHT, KEY.D], mode: 'down', action: ()-> keyRight  = true; },
-                { keys: [KEY.UP,    KEY.W], mode: 'down', action: ()-> keyFaster = true; },
-                { keys: [KEY.DOWN,  KEY.S], mode: 'down', action: ()-> keySlower = true; },
-                { keys: [KEY.LEFT,  KEY.A], mode: 'up',   action: ()-> keyLeft   = false; },
-                { keys: [KEY.RIGHT, KEY.D], mode: 'up',   action: ()-> keyRight  = false; },
-                { keys: [KEY.UP,    KEY.W], mode: 'up',   action: ()-> keyFaster = false; },
-                { keys: [KEY.DOWN,  KEY.S], mode: 'up',   action: ()-> keySlower = false; }
+                { keys: [KEY.LEFT,  KEY.A], mode: 'down', action: ()-> keyLeft   = true;return},
+                { keys: [KEY.RIGHT, KEY.D], mode: 'down', action: ()-> keyRight  = true;return},
+                { keys: [KEY.UP,    KEY.W], mode: 'down', action: ()-> keyFaster = true;return},
+                { keys: [KEY.DOWN,  KEY.S], mode: 'down', action: ()-> keySlower = true;return},
+                { keys: [KEY.LEFT,  KEY.A], mode: 'up',   action: ()-> keyLeft   = false;return},
+                { keys: [KEY.RIGHT, KEY.D], mode: 'up',   action: ()-> keyRight  = false;return},
+                { keys: [KEY.UP,    KEY.W], mode: 'up',   action: ()-> keyFaster = false;return},
+                { keys: [KEY.DOWN,  KEY.S], mode: 'up',   action: ()-> keySlower = false;return}
             ]
             ready:(images)->
                 background = images[0]
@@ -225,7 +231,7 @@ define([
             playerZ = camHeight * camDepth
             resolution = height / 480
 
-            if( segments.length is 0 or options.segmentLength or options.rumbleLength)
+            if( ( segments.length is 0 ) or ( options.segmentLength ) or ( options.rumbleLength ))
                 resetRoad()
             return
         return

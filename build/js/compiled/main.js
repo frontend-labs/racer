@@ -19,7 +19,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   fieldOfView = 100;
   camHeight = 1000;
   camDepth = null;
-  drawDistance = 300;
+  drawDistance = 100;
   playerX = 0;
   playerZ = null;
   fogDensity = 5;
@@ -36,9 +36,13 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   keyFaster = false;
   keySlower = false;
   update = function(dt) {
-    var dx, pos;
-    pos = Util.increase(position, dt * speed, trackLength);
+    var dx;
+    position = Util.increase(position, dt * speed, trackLength);
     dx = dt * 2 * (speed / maxSpeed);
+    console.log('keyLeft', keyLeft);
+    console.log('keyRight', keyRight);
+    console.log('keyFaster', keyFaster);
+    console.log('keySlower', keySlower);
     if (keyLeft) {
       playerX = playerX - dx;
     } else if (keyRight) {
@@ -51,7 +55,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     } else {
       speed = Util.accelerate(speed, decel, dt);
     }
-    if ((playerX < -1) || (playerX > 1) && (speed > offRoadLimit)) {
+    if (((playerX < -1) || (playerX > 1)) && (speed > offRoadLimit)) {
       speed = Util.accelerate(speed, offRoadDecel, dt);
     }
     playerX = Util.limit(playerX, -2, 2);
@@ -69,23 +73,21 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     segment = null;
     while (indexDrawDistance < drawDistance) {
       segment = segments[(baseSegment.index + indexDrawDistance) % segments.length];
-      if (!(segment.p1.camera.z <= camDepth) || !(segment.p2.screen.y >= maxy)) {
-        segment.looped = segments.index < baseSegment.index;
-        segment.fog = Util.exponentialFog(indexDrawDistance / drawDistance, fogDensity);
-        projectPrms = {
-          camX: playerX * roadWidth,
-          camY: camHeight,
-          camZ: position - (segment.looped ? trackLength : 0),
-          camDepth: camDepth,
-          width: width,
-          height: height,
-          roadWidth: roadWidth
-        };
-        Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-        Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-        Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
-        maxy = segment.p2.screen.y;
-      }
+      segment.looped = segments.index < baseSegment.index;
+      segment.fog = Util.exponentialFog(indexDrawDistance / drawDistance, fogDensity);
+      projectPrms = {
+        camX: playerX * roadWidth,
+        camY: camHeight,
+        camZ: position - (segment.looped ? trackLength : 0),
+        camDepth: camDepth,
+        width: width,
+        height: height,
+        roadWidth: roadWidth
+      };
+      Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
+      Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
+      Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
+      maxy = segment.p2.screen.y;
       indexDrawDistance++;
     }
     Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft ? -1 : keyRight ? 1 : 0), 0);
@@ -139,49 +141,49 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
         keys: [KEY.LEFT, KEY.A],
         mode: 'down',
         action: function() {
-          return keyLeft = true;
+          keyLeft = true;
         }
       }, {
         keys: [KEY.RIGHT, KEY.D],
         mode: 'down',
         action: function() {
-          return keyRight = true;
+          keyRight = true;
         }
       }, {
         keys: [KEY.UP, KEY.W],
         mode: 'down',
         action: function() {
-          return keyFaster = true;
+          keyFaster = true;
         }
       }, {
         keys: [KEY.DOWN, KEY.S],
         mode: 'down',
         action: function() {
-          return keySlower = true;
+          keySlower = true;
         }
       }, {
         keys: [KEY.LEFT, KEY.A],
         mode: 'up',
         action: function() {
-          return keyLeft = false;
+          keyLeft = false;
         }
       }, {
         keys: [KEY.RIGHT, KEY.D],
         mode: 'up',
         action: function() {
-          return keyRight = false;
+          keyRight = false;
         }
       }, {
         keys: [KEY.UP, KEY.W],
         mode: 'up',
         action: function() {
-          return keyFaster = false;
+          keyFaster = false;
         }
       }, {
         keys: [KEY.DOWN, KEY.S],
         mode: 'up',
         action: function() {
-          return keySlower = false;
+          keySlower = false;
         }
       }
     ],
@@ -207,7 +209,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     camDepth = 1 / Math.tan((fieldOfView / 2) * Math.PI / 180);
     playerZ = camHeight * camDepth;
     resolution = height / 480;
-    if (segments.length === 0 || options.segmentLength || options.rumbleLength) {
+    if ((segments.length === 0) || options.segmentLength || options.rumbleLength) {
       resetRoad();
     }
   };
