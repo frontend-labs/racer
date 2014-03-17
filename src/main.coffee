@@ -102,10 +102,7 @@ define([
                 segment.fog = Util.exponentialFog(n/drawDistance, fogDensity)
 
                 Debugger.element('fog', "fog:#{segment.fog} ,  #{n}")
-                Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:#{segment.p1.camera.z} ,  #{n}")
-                Debugger.element('cameraDepth', "camDepth:#{camDepth}")
-                Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:#{segment.p2.screen.y}")
-                Debugger.element('maxy', "Before maxy:#{maxy}")
+                Debugger.element('cameraz', "cameraZ:" + (position - (if segment.looped then trackLength else 0)))
 
                 Util.project segment.p1, 
                              ( playerX * roadWidth ), 
@@ -127,8 +124,12 @@ define([
 
                 Debugger.element('segment', segment)
 
+                Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:#{segment.p1.camera.z} ,  #{n}")
+                Debugger.element('cameraDepth', "camDepth:#{camDepth}")
+                Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:#{segment.p2.screen.y}")
+                Debugger.element('maxy', "Before maxy:#{maxy}")
                 if (segment.p1.camera.z <= camDepth) or segment.p2.screen.y >= maxy
-                    n++
+                    false
 
                 ##unless ( segment.p1.camera.z >= camDepth ) or ( segment.p2.screen.y <= maxy )
                 ##continue if ( segment.p1.camera.z <= camDepth ) or ( segment.p2.screen.y >= maxy )

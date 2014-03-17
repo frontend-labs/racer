@@ -71,15 +71,16 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       segment.looped = segment.index < baseSegment.index;
       segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
       Debugger.element('fog', "fog:" + segment.fog + " ,  " + n);
+      Debugger.element('cameraz', "cameraZ:" + (position - (segment.looped ? trackLength : 0)));
+      Util.project(segment.p1, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Util.project(segment.p2, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Debugger.element('segment', segment);
       Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:" + segment.p1.camera.z + " ,  " + n);
       Debugger.element('cameraDepth', "camDepth:" + camDepth);
       Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:" + segment.p2.screen.y);
       Debugger.element('maxy', "Before maxy:" + maxy);
-      Util.project(segment.p1, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
-      Util.project(segment.p2, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
-      Debugger.element('segment', segment);
       if ((segment.p1.camera.z <= camDepth) || segment.p2.screen.y >= maxy) {
-        n++;
+        false;
       }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
       maxy = segment.p2.screen.y;
