@@ -20,6 +20,7 @@ define([
                     last = Util.timestamp()
                     dt = 0
                     gdt = 0
+
                     frame = ()->
                         now = Util.timestamp()
                         dt = Math.min(1, (now - last) / 1000)
@@ -45,10 +46,10 @@ define([
                         callback(result)
                     return
 
-                for name in names by 1
-                    result[_i] = document.createElement 'img'
+                for name,i in names by 1
+                    result[i] = document.createElement 'img'
                     DOM.on result[_i], 'load', onload
-                    result[_i].src = "images/#{name}.png"
+                    result[i].src = "images/#{name}.png"
                 return
 
             setKeyListener:(keys)->

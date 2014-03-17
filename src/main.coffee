@@ -1,13 +1,14 @@
 define([
         'lib/dom'
         'lib/utils'
+        'lib/debugger'
         'lib/render'
         'lib/game'
         'lib/stats'
         'settings/key'
         'settings/background'
         'settings/colors'],
-    (DOM, Util, Render, Game, Stats, KEY, BACKGROUND, COLORS)->
+    (DOM, Util, Debugger, Render, Game, Stats, KEY, BACKGROUND, COLORS)->
 
         fps = 60
         step = 1/fps
@@ -28,7 +29,7 @@ define([
         fieldOfView = 100
         camHeight = 1000
         camDepth = null
-        drawDistance = 100
+        drawDistance = 300
         playerX = 0
         playerZ = null
         fogDensity = 5
@@ -54,11 +55,6 @@ define([
             position = Util.increase(position, dt * speed, trackLength)
             dx = dt * 2 * (speed/maxSpeed)
 
-            console.log 'keyLeft', keyLeft
-            console.log 'keyRight', keyRight
-            console.log 'keyFaster', keyFaster
-            console.log 'keySlower', keySlower
-
             if keyLeft
                 playerX = playerX - dx
             else if keyRight
@@ -74,10 +70,12 @@ define([
             if ( (playerX < -1) or (playerX > 1) ) and (speed > offRoadLimit)
                 speed = Util.accelerate speed, offRoadDecel, dt
 
+            Debugger.element('speed', "speed: #{speed}")
+            Debugger.element('position', "position: #{position}")
+
             playerX = Util.limit playerX, -2, 2
             speed = Util.limit speed, 0, maxSpeed
             return
-
 
         ###################################################
         #Render the game world
@@ -87,49 +85,54 @@ define([
             maxy = height
 
             ctx.clearRect 0, 0, width, height
+            
+            #render only background
+            #Render.background ctx, background, width, height, BACKGROUND.SKY
+            #Render.background ctx, background, width, height, BACKGROUND.HILLS
+            #Render.background ctx, background, width, height, BACKGROUND.TREES
 
-            Render.background ctx, background, width, height, BACKGROUND.SKY
-            Render.background ctx, background, width, height, BACKGROUND.HILLS
-            Render.background ctx, background, width, height, BACKGROUND.TREES
-
-            indexDrawDistance = 0
+            n = 0
             segment = null
-            while indexDrawDistance < drawDistance
-                segment = segments[(baseSegment.index + indexDrawDistance) % segments.length]
 
-                #if not( segment.p1.camera.z <= camDepth ) or not( segment.p2.screen.y >= maxy )
+            while n < drawDistance
+                #get a segment of the segment collection
+                segment = segments[(baseSegment.index + n) % segments.length]
 
-                segment.looped = segments.index < baseSegment.index
-                segment.fog = Util.exponentialFog(indexDrawDistance/drawDistance, fogDensity)
+                segment.looped = segment.index < baseSegment.index
+                segment.fog = Util.exponentialFog(n/drawDistance, fogDensity)
 
-                projectPrms =
-                    camX: playerX * roadWidth
-                    camY: camHeight
-                    camZ: position - (if segment.looped then trackLength else 0)
-                    camDepth: camDepth 
-                    width: width
-                    height: height
-                    roadWidth: roadWidth
+                Debugger.element('fog', "fog:#{segment.fog} ,  #{n}")
+                Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:#{segment.p1.camera.z} ,  #{n}")
+                Debugger.element('cameraDepth', "camDepth:#{camDepth}")
+                Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:#{segment.p2.screen.y}")
+                Debugger.element('maxy', "Before maxy:#{maxy}")
 
                 Util.project segment.p1, 
-                             projectPrms.camX, 
-                             projectPrms.camY, 
-                             projectPrms.camZ,
-                             projectPrms.camDepth, 
-                             projectPrms.width, 
-                             projectPrms.height, 
-                             projectPrms.roadWidth
+                             ( playerX * roadWidth ), 
+                             camHeight, 
+                             position - (if segment.looped then trackLength else 0),
+                             camDepth, 
+                             width, 
+                             height, 
+                             roadWidth
 
                 Util.project segment.p2, 
-                             projectPrms.camX, 
-                             projectPrms.camY, 
-                             projectPrms.camZ,
-                             projectPrms.camDepth, 
-                             projectPrms.width, 
-                             projectPrms.height, 
-                             projectPrms.roadWidth
+                             ( playerX * roadWidth ), 
+                             camHeight, 
+                             position - (if segment.looped then trackLength else 0),
+                             camDepth, 
+                             width, 
+                             height, 
+                             roadWidth
 
-                    
+                Debugger.element('segment', segment)
+
+                if (segment.p1.camera.z <= camDepth) or segment.p2.screen.y >= maxy
+                    n++
+
+                ##unless ( segment.p1.camera.z >= camDepth ) or ( segment.p2.screen.y <= maxy )
+                ##continue if ( segment.p1.camera.z <= camDepth ) or ( segment.p2.screen.y >= maxy )
+
                 Render.segment ctx, width, lanes,
                                 segment.p1.screen.x,
                                 segment.p1.screen.y,
@@ -141,7 +144,8 @@ define([
                                 segment.color
 
                 maxy = segment.p2.screen.y
-                indexDrawDistance++
+                Debugger.element('maxy', "maxy:#{maxy}")
+                n++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,
                             camDepth/playerZ,
@@ -156,31 +160,31 @@ define([
         ###################################################
         resetRoad = ()->
             segments = []
-            indexSegments = 0
-            indexRumble = 0
-
-            while indexSegments < 500
+            n = 0
+            nRumble = 0
+            #create a Collection of segments
+            while n < 500
                 segments.push
-                    index: indexSegments
+                    index: n
                     p1: 
                         world:
-                            z: indexSegments * segmentLength
+                            z: n * segmentLength
                         camera: {}
                         screen: {}
                     p2: 
                         world:
-                            z: ( indexSegments + 1 ) * segmentLength
+                            z: ( n + 1 ) * segmentLength
                         camera: {}
                         screen: {}
-                    color: if ( Math.floor( indexSegments / rumbleLength) % 2 ) then COLORS.DARK else COLORS.LIGHT
-                indexSegments++
+                    color: if ( Math.floor( n / rumbleLength) % 2 ) then COLORS.DARK else COLORS.LIGHT
+                n++
 
             segments[findSegment(playerZ).index + 2].color = COLORS.START
             segments[findSegment(playerZ).index + 3].color = COLORS.START
 
-            while indexRumble < rumbleLength
-                segments[( segments.length-1-indexRumble )].color = COLORS.FINISH
-                indexRumble++
+            while nRumble < rumbleLength
+                segments[ segments.length - 1 - nRumble ].color = COLORS.FINISH
+                nRumble++
 
             trackLength = segments.length * segmentLength
             return

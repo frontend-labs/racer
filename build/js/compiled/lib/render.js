@@ -1,7 +1,8 @@
-define(['../lib/utils', '../settings/colors', '../settings/sprites'], function(Utils, COLORS, SPRITES) {
+define(['../lib/utils', '../lib/debugger', '../settings/colors', '../settings/sprites'], function(Utils, Debugger, COLORS, SPRITES) {
   var Render;
   Render = {
     polygon: function(ctx, x1, y1, x2, y2, x3, y3, x4, y4, color) {
+      Debugger.element("polygon", "polygon: x1:" + x1 + ",y1:" + y1 + ",x2:" + x2 + ",y2:" + y2 + ",x3:" + x3 + ",y3:" + y3 + ",x4:" + x4 + ",y4:" + y4 + ",color:" + color);
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -13,6 +14,7 @@ define(['../lib/utils', '../settings/colors', '../settings/sprites'], function(U
     },
     segment: function(ctx, width, lanes, x1, y1, w1, x2, y2, w2, fog, color) {
       var l1, l2, lane, lanew1, lanew2, lanex1, lanex2, r1, r2;
+      Debugger.element('Render-segment', "Render Segment: x1: " + x1 + ",y1: " + y1 + " ,x2: " + x2 + " ,y2: " + y2 + " ,w2: " + w2 + " ,fog: " + fog + " ,color: " + color);
       r1 = Render.rumbleWidth(w1, lanes);
       r2 = Render.rumbleWidth(w2, lanes);
       l1 = Render.laneMarkerWidth(w1, lanes);
@@ -35,7 +37,7 @@ define(['../lib/utils', '../settings/colors', '../settings/sprites'], function(U
           lane++;
         }
       }
-      return Render.fog(ctx, 0, y1, width, y2 - y1, fog);
+      Render.fog(ctx, 0, y1, width, y2 - y1, fog);
     },
     background: function(ctx, background, width, height, layer, rotation, offset) {
       var destH, destW, destX, destY, imageH, imageW, sourceH, sourceW, sourceX, sourceY;
@@ -84,7 +86,7 @@ define(['../lib/utils', '../settings/colors', '../settings/sprites'], function(U
         ctx.globalAlpha = 1 - fog;
         ctx.fillStyle = COLORS.FOG;
         ctx.fillRect(x, y, width, height);
-        return ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1;
       }
     },
     rumbleWidth: function(projectedRoadWidth, lanes) {

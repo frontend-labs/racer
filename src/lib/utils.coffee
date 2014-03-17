@@ -53,15 +53,14 @@ define(->
                 result += max
             result
 
-        project: (p, camX, camY, camZ, camDepth, width, height, roadWith)->
-            p.camera.x = p.world.x or 0 - camX
-            p.camera.y = p.world.y or 0 - camY
-            p.camera.z = p.world.z or 0 - camZ
-
+        project: (p, camX, camY, camZ, camDepth, width, height, roadWidth)->
+            p.camera.x = ( p.world.x or 0 ) - camX
+            p.camera.y = ( p.world.y or 0 ) - camY
+            p.camera.z = ( p.world.z or 0 ) - camZ
             p.screen.scale = camDepth/p.camera.z
             p.screen.x = Math.round((width/2) + (p.screen.scale * p.camera.x * width/2))
             p.screen.y = Math.round((height/2) - (p.screen.scale * p.camera.y * height/2))
-            p.screen.w = Math.round(( p.screen.scale * roadWith * width/2 ))
+            p.screen.w = Math.round(( p.screen.scale * roadWidth * width/2 ))
             return
 
         overlap:(x1, w1, x2, w2, percent)->
@@ -72,17 +71,6 @@ define(->
             max2 = x2 + (w2 * half)
 
             return !( (max1 < min2) or (min1 > max2))
-
-    ###
-    #POLYFILL for requestAnimationFrame
-    ###
-    if !window.requestAnimationFrame
-        window.webkitRequestAnimationFrame or
-        window.mozRequestAnimationFrame or
-        window.oRequestAnimationFrame or
-        window.msRequestAnimationFrame or
-        (callback, element)->
-            window.setTimeout( callback, 1000/60)
 
     return Util
 )

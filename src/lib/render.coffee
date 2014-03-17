@@ -1,11 +1,13 @@
 define([
         '../lib/utils',
+        '../lib/debugger',
         '../settings/colors',
         '../settings/sprites'], 
-    ( Utils, COLORS, SPRITES)->
+    ( Utils, Debugger, COLORS, SPRITES)->
 
         Render =
             polygon:(ctx, x1, y1, x2, y2, x3, y3, x4, y4, color)->
+                Debugger.element "polygon", "polygon: x1:" + x1 + ",y1:" + y1 + ",x2:" + x2 + ",y2:" + y2 + ",x3:" + x3 + ",y3:" + y3 + ",x4:" + x4 + ",y4:" + y4 + ",color:" + color
                 ctx.fillStyle = color
                 ctx.beginPath()
                 ctx.moveTo x1, y1
@@ -17,6 +19,7 @@ define([
                 return
 
             segment:(ctx, width, lanes, x1, y1, w1, x2, y2, w2, fog, color)->
+                Debugger.element('Render-segment', "Render Segment: x1: #{ x1 },y1: #{ y1 } ,x2: #{ x2 } ,y2: #{ y2 } ,w2: #{ w2} ,fog: #{ fog } ,color: #{ color }")
                 r1 = Render.rumbleWidth w1, lanes
                 r2 = Render.rumbleWidth w2, lanes
                 l1 = Render.laneMarkerWidth w1, lanes
@@ -43,6 +46,7 @@ define([
                         lane++
 
                 Render.fog ctx, 0, y1, width, y2-y1, fog
+                return
 
             background:(ctx, background, width, height, layer, rotation, offset)->
                 rotation = rotation or 0
@@ -95,6 +99,7 @@ define([
                     ctx.fillStyle = COLORS.FOG
                     ctx.fillRect(x, y, width, height)
                     ctx.globalAlpha = 1
+                return
 
             rumbleWidth:(projectedRoadWidth, lanes)->
                 projectedRoadWidth/Math.max(6, 2 * lanes)

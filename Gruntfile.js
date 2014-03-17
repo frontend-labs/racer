@@ -55,7 +55,7 @@ module.exports = function(grunt) {
     watch: {
       javascript: {
         files: [cfg.coffee_source_path+'**/*.coffee'],
-        tasks: ['javascript'],
+        tasks: ['coffee'],
         options: {
           interrupt: true
         }

@@ -65,14 +65,14 @@ define(function() {
       }
       return result;
     },
-    project: function(p, camX, camY, camZ, camDepth, width, height, roadWith) {
-      p.camera.x = p.world.x || 0 - camX;
-      p.camera.y = p.world.y || 0 - camY;
-      p.camera.z = p.world.z || 0 - camZ;
+    project: function(p, camX, camY, camZ, camDepth, width, height, roadWidth) {
+      p.camera.x = (p.world.x || 0) - camX;
+      p.camera.y = (p.world.y || 0) - camY;
+      p.camera.z = (p.world.z || 0) - camZ;
       p.screen.scale = camDepth / p.camera.z;
       p.screen.x = Math.round((width / 2) + (p.screen.scale * p.camera.x * width / 2));
       p.screen.y = Math.round((height / 2) - (p.screen.scale * p.camera.y * height / 2));
-      p.screen.w = Math.round(p.screen.scale * roadWith * width / 2);
+      p.screen.w = Math.round(p.screen.scale * roadWidth * width / 2);
     },
     overlap: function(x1, w1, x2, w2, percent) {
       var half, max1, max2, min1, min2;
@@ -84,14 +84,5 @@ define(function() {
       return !((max1 < min2) || (min1 > max2));
     }
   };
-  /*
-  #POLYFILL for requestAnimationFrame
-  */
-
-  if (!window.requestAnimationFrame) {
-    window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
-      return window.setTimeout(callback, 1000 / 60);
-    };
-  }
   return Util;
 });

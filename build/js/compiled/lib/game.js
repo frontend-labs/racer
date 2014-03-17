@@ -32,7 +32,7 @@ define(['lib/stats', 'lib/dom', 'lib/utils'], function(Stats, DOM, Util) {
       });
     },
     loadImgs: function(names, callback) {
-      var count, name, onload, result, _i, _len;
+      var count, i, name, onload, result, _i, _len;
       result = [];
       count = names.length;
       onload = function() {
@@ -40,11 +40,11 @@ define(['lib/stats', 'lib/dom', 'lib/utils'], function(Stats, DOM, Util) {
           callback(result);
         }
       };
-      for (_i = 0, _len = names.length; _i < _len; _i += 1) {
-        name = names[_i];
-        result[_i] = document.createElement('img');
+      for (i = _i = 0, _len = names.length; _i < _len; i = _i += 1) {
+        name = names[i];
+        result[i] = document.createElement('img');
         DOM.on(result[_i], 'load', onload);
-        result[_i].src = "images/" + name + ".png";
+        result[i].src = "images/" + name + ".png";
       }
     },
     setKeyListener: function(keys) {

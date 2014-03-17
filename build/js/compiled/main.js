@@ -1,4 +1,4 @@
-define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings/key', 'settings/background', 'settings/colors'], function(DOM, Util, Render, Game, Stats, KEY, BACKGROUND, COLORS) {
+define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/stats', 'settings/key', 'settings/background', 'settings/colors'], function(DOM, Util, Debugger, Render, Game, Stats, KEY, BACKGROUND, COLORS) {
   var accel, background, breaking, camDepth, camHeight, canvas, ctx, decel, drawDistance, fieldOfView, findSegment, fogDensity, fps, height, keyFaster, keyLeft, keyRight, keySlower, lanes, maxSpeed, offRoadDecel, offRoadLimit, playerX, playerZ, position, render, reset, resetRoad, resolution, roadWidth, rumbleLength, segmentLength, segments, speed, sprites, stats, step, trackLength, update, width;
   fps = 60;
   step = 1 / fps;
@@ -19,7 +19,7 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
   fieldOfView = 100;
   camHeight = 1000;
   camDepth = null;
-  drawDistance = 100;
+  drawDistance = 300;
   playerX = 0;
   playerZ = null;
   fogDensity = 5;
@@ -39,10 +39,6 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     var dx;
     position = Util.increase(position, dt * speed, trackLength);
     dx = dt * 2 * (speed / maxSpeed);
-    console.log('keyLeft', keyLeft);
-    console.log('keyRight', keyRight);
-    console.log('keyFaster', keyFaster);
-    console.log('keySlower', keySlower);
     if (keyLeft) {
       playerX = playerX - dx;
     } else if (keyRight) {
@@ -58,71 +54,71 @@ define(['lib/dom', 'lib/utils', 'lib/render', 'lib/game', 'lib/stats', 'settings
     if (((playerX < -1) || (playerX > 1)) && (speed > offRoadLimit)) {
       speed = Util.accelerate(speed, offRoadDecel, dt);
     }
+    Debugger.element('speed', "speed: " + speed);
+    Debugger.element('position', "position: " + position);
     playerX = Util.limit(playerX, -2, 2);
     speed = Util.limit(speed, 0, maxSpeed);
   };
   render = function() {
-    var baseSegment, indexDrawDistance, maxy, projectPrms, segment;
+    var baseSegment, maxy, n, segment;
     baseSegment = findSegment(position);
     maxy = height;
     ctx.clearRect(0, 0, width, height);
-    Render.background(ctx, background, width, height, BACKGROUND.SKY);
-    Render.background(ctx, background, width, height, BACKGROUND.HILLS);
-    Render.background(ctx, background, width, height, BACKGROUND.TREES);
-    indexDrawDistance = 0;
+    n = 0;
     segment = null;
-    while (indexDrawDistance < drawDistance) {
-      segment = segments[(baseSegment.index + indexDrawDistance) % segments.length];
-      segment.looped = segments.index < baseSegment.index;
-      segment.fog = Util.exponentialFog(indexDrawDistance / drawDistance, fogDensity);
-      projectPrms = {
-        camX: playerX * roadWidth,
-        camY: camHeight,
-        camZ: position - (segment.looped ? trackLength : 0),
-        camDepth: camDepth,
-        width: width,
-        height: height,
-        roadWidth: roadWidth
-      };
-      Util.project(segment.p1, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
-      Util.project(segment.p2, projectPrms.camX, projectPrms.camY, projectPrms.camZ, projectPrms.camDepth, projectPrms.width, projectPrms.height, projectPrms.roadWidth);
+    while (n < drawDistance) {
+      segment = segments[(baseSegment.index + n) % segments.length];
+      segment.looped = segment.index < baseSegment.index;
+      segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
+      Debugger.element('fog', "fog:" + segment.fog + " ,  " + n);
+      Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:" + segment.p1.camera.z + " ,  " + n);
+      Debugger.element('cameraDepth', "camDepth:" + camDepth);
+      Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:" + segment.p2.screen.y);
+      Debugger.element('maxy', "Before maxy:" + maxy);
+      Util.project(segment.p1, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Util.project(segment.p2, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Debugger.element('segment', segment);
+      if ((segment.p1.camera.z <= camDepth) || segment.p2.screen.y >= maxy) {
+        n++;
+      }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
       maxy = segment.p2.screen.y;
-      indexDrawDistance++;
+      Debugger.element('maxy', "maxy:" + maxy);
+      n++;
     }
     Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft ? -1 : keyRight ? 1 : 0), 0);
   };
   resetRoad = function() {
-    var indexRumble, indexSegments;
+    var n, nRumble;
     segments = [];
-    indexSegments = 0;
-    indexRumble = 0;
-    while (indexSegments < 500) {
+    n = 0;
+    nRumble = 0;
+    while (n < 500) {
       segments.push({
-        index: indexSegments,
+        index: n,
         p1: {
           world: {
-            z: indexSegments * segmentLength
+            z: n * segmentLength
           },
           camera: {},
           screen: {}
         },
         p2: {
           world: {
-            z: (indexSegments + 1) * segmentLength
+            z: (n + 1) * segmentLength
           },
           camera: {},
           screen: {}
         },
-        color: Math.floor(indexSegments / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
+        color: Math.floor(n / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
       });
-      indexSegments++;
+      n++;
     }
     segments[findSegment(playerZ).index + 2].color = COLORS.START;
     segments[findSegment(playerZ).index + 3].color = COLORS.START;
-    while (indexRumble < rumbleLength) {
-      segments[segments.length - 1 - indexRumble].color = COLORS.FINISH;
-      indexRumble++;
+    while (nRumble < rumbleLength) {
+      segments[segments.length - 1 - nRumble].color = COLORS.FINISH;
+      nRumble++;
     }
     trackLength = segments.length * segmentLength;
   };
