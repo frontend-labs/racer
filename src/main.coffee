@@ -70,9 +70,6 @@ define([
             if ( (playerX < -1) or (playerX > 1) ) and (speed > offRoadLimit)
                 speed = Util.accelerate speed, offRoadDecel, dt
 
-            Debugger.element('speed', "speed: #{speed}")
-            Debugger.element('position', "position: #{position}")
-
             playerX = Util.limit playerX, -2, 2
             speed = Util.limit speed, 0, maxSpeed
             return
@@ -87,9 +84,9 @@ define([
             ctx.clearRect 0, 0, width, height
             
             #render only background
-            #Render.background ctx, background, width, height, BACKGROUND.SKY
-            #Render.background ctx, background, width, height, BACKGROUND.HILLS
-            #Render.background ctx, background, width, height, BACKGROUND.TREES
+            Render.background ctx, background, width, height, BACKGROUND.SKY
+            Render.background ctx, background, width, height, BACKGROUND.HILLS
+            Render.background ctx, background, width, height, BACKGROUND.TREES
 
             n = 0
             segment = null
@@ -100,9 +97,6 @@ define([
 
                 segment.looped = segment.index < baseSegment.index
                 segment.fog = Util.exponentialFog(n/drawDistance, fogDensity)
-
-                Debugger.element('fog', "fog:#{segment.fog} ,  #{n}")
-                Debugger.element('cameraz', "cameraZ:" + (position - (if segment.looped then trackLength else 0)))
 
                 Util.project segment.p1, 
                              ( playerX * roadWidth ), 
@@ -122,17 +116,13 @@ define([
                              height, 
                              roadWidth
 
-                Debugger.element('segment', segment)
-
-                Debugger.element('segment.p1.camera.z', "segment.p1.camera.z:#{segment.p1.camera.z} ,  #{n}")
-                Debugger.element('cameraDepth', "camDepth:#{camDepth}")
-                Debugger.element('segment.p2.screen.y', "segment.p2.screen.y:#{segment.p2.screen.y}")
-                Debugger.element('maxy', "Before maxy:#{maxy}")
-                if (segment.p1.camera.z <= camDepth) or segment.p2.screen.y >= maxy
-                    false
-
-                ##unless ( segment.p1.camera.z >= camDepth ) or ( segment.p2.screen.y <= maxy )
-                ##continue if ( segment.p1.camera.z <= camDepth ) or ( segment.p2.screen.y >= maxy )
+                #WARNING
+                #======
+                #ever makes the next segment of road
+                #this conditional ever return true for create more segments when looping
+                if (segment.p1.camera.z <= camDepth) or ( segment.p2.screen.y >= maxy )
+                    n++
+                    continue
 
                 Render.segment ctx, width, lanes,
                                 segment.p1.screen.x,
@@ -145,8 +135,6 @@ define([
                                 segment.color
 
                 maxy = segment.p2.screen.y
-                Debugger.element('maxy', "maxy:#{maxy}")
-                n++
 
             Render.player ctx, width, height, resolution, roadWidth, sprites, speed/maxSpeed,
                             camDepth/playerZ,

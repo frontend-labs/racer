@@ -80,10 +80,12 @@ define( ->
               when 1
                 fpsDiv.style.display = 'none'
                 msDiv.style.display = 'block'
+            return
 
         updateGraph = ( dom, value )->
             child = dom.appendChild( dom.firstChild )
             child.style.height = value + 'px'
+            return
 
         return {
             domElement: container
@@ -92,6 +94,7 @@ define( ->
                 fps
             begin: ()-> 
                 startTime = Date.now()
+                return
             end: ()-> 
                 time = Date.now()
                 ms = time - startTime
@@ -108,14 +111,16 @@ define( ->
                     fpsMin = Math.min( fpsMin, fps )
                     fpsMax = Math.max( fpsMax, fps )
 
-                fpsText.textContent = fps + ' FPS (' + fpsMin + '-' + fpsMax + ')'
-                updateGraph( fpsGraph, Math.min( 30, 30 - ( fps / 100 ) * 30 ) )
+                    fpsText.textContent = fps + ' FPS (' + fpsMin + '-' + fpsMax + ')'
+                    updateGraph( fpsGraph, Math.min( 30, 30 - ( fps / 100 ) * 30 ) )
 
-                prevTime = time
-                frames = 0
-                return time
+                    prevTime = time
+                    frames = 0
+
+                time
 
             update: ()->
               startTime = @end()
+              return
         }
 )

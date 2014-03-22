@@ -69,9 +69,6 @@ define(['../lib/debugger'], function(Debugger) {
       p.camera.x = (p.world.x || 0) - camX;
       p.camera.y = (p.world.y || 0) - camY;
       p.camera.z = (p.world.z || 0) - camZ;
-      Debugger.element("initP", "initP");
-      Debugger.element("p", p);
-      Debugger.element("finalP", "finalP");
       p.screen.scale = camDepth / p.camera.z;
       p.screen.x = Math.round((width / 2) + (p.screen.scale * p.camera.x * width / 2));
       p.screen.y = Math.round((height / 2) - (p.screen.scale * p.camera.y * height / 2));

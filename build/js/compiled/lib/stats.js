@@ -65,16 +65,17 @@ define(function() {
       switch (mode) {
         case 0:
           fpsDiv.style.display = 'block';
-          return msDiv.style.display = 'none';
+          msDiv.style.display = 'none';
+          break;
         case 1:
           fpsDiv.style.display = 'none';
-          return msDiv.style.display = 'block';
+          msDiv.style.display = 'block';
       }
     };
     updateGraph = function(dom, value) {
       var child;
       child = dom.appendChild(dom.firstChild);
-      return child.style.height = value + 'px';
+      child.style.height = value + 'px';
     };
     return {
       domElement: container,
@@ -83,7 +84,7 @@ define(function() {
         return fps;
       },
       begin: function() {
-        return startTime = Date.now();
+        startTime = Date.now();
       },
       end: function() {
         var time;
@@ -98,15 +99,15 @@ define(function() {
           fps = Math.round((frames * 1000) / (time - prevTime));
           fpsMin = Math.min(fpsMin, fps);
           fpsMax = Math.max(fpsMax, fps);
+          fpsText.textContent = fps + ' FPS (' + fpsMin + '-' + fpsMax + ')';
+          updateGraph(fpsGraph, Math.min(30, 30 - (fps / 100) * 30));
+          prevTime = time;
+          frames = 0;
         }
-        fpsText.textContent = fps + ' FPS (' + fpsMin + '-' + fpsMax + ')';
-        updateGraph(fpsGraph, Math.min(30, 30 - (fps / 100) * 30));
-        prevTime = time;
-        frames = 0;
         return time;
       },
       update: function() {
-        return startTime = this.end();
+        startTime = this.end();
       }
     };
   };
