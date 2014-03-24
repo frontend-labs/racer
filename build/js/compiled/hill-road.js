@@ -1,5 +1,5 @@
 define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/stats', 'settings/key', 'settings/background', 'settings/colors'], function(DOM, Util, Debugger, Render, Game, Stats, KEY, BACKGROUND, COLORS) {
-  var ROAD, accel, addCurve, addRoad, addSCurves, addSegment, addStraight, background, breaking, camDepth, camHeight, canvas, centrifugal, ctx, decel, drawDistance, fieldOfView, findSegment, fogDensity, fps, height, hillOffset, hillSpeed, keyFaster, keyLeft, keyRight, keySlower, lanes, maxSpeed, offRoadDecel, offRoadLimit, playerX, playerZ, position, render, reset, resetRoad, resolution, roadWidth, rumbleLength, segmentLength, segments, skyOffset, skySpeed, speed, sprites, stats, step, trackLength, treeOffset, treeSpeed, update, width;
+  var ROAD, accel, addCurve, addDownhillToEnd, addHill, addLowRollingHills, addRoad, addSCurves, addSegment, addStraight, background, breaking, camDepth, camHeight, canvas, centrifugal, ctx, decel, drawDistance, fieldOfView, findSegment, fogDensity, fps, height, hillOffset, hillSpeed, keyFaster, keyLeft, keyRight, keySlower, lanes, lastY, maxSpeed, offRoadDecel, offRoadLimit, playerX, playerZ, position, render, reset, resetRoad, resolution, roadWidth, rumbleLength, segmentLength, segments, skyOffset, skySpeed, speed, sprites, stats, step, trackLength, treeOffset, treeSpeed, update, width;
   fps = 60;
   step = 1 / fps;
   width = 1024;
@@ -50,6 +50,12 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       MEDIUM: 50,
       LONG: 100
     },
+    HILL: {
+      NONE: 0,
+      LOW: 20,
+      MEDIUM: 40,
+      HIGH: 60
+    },
     CURVE: {
       NONE: 0,
       EASY: 2,
@@ -86,41 +92,52 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     speed = Util.limit(speed, 0, maxSpeed);
   };
   render = function() {
-    var basePercent, baseSegment, dx, maxy, n, segment, x;
+    var basePercent, baseSegment, dx, maxy, n, playerPercent, playerSegment, playerY, segment, x;
     baseSegment = findSegment(position);
     basePercent = Util.percentRemaining(position, segmentLength);
+    playerSegment = findSegment(position + playerZ);
+    playerPercent = Util.percentRemaining(position + playerZ, segmentLength);
+    playerY = Util.interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent);
     maxy = height;
     x = 0;
     dx = -(baseSegment.curve * basePercent);
     ctx.clearRect(0, 0, width, height);
-    Render.background(ctx, background, width, height, BACKGROUND.SKY, skyOffset);
-    Render.background(ctx, background, width, height, BACKGROUND.HILLS, hillOffset);
-    Render.background(ctx, background, width, height, BACKGROUND.TREES, treeOffset);
+    Render.background(ctx, background, width, height, BACKGROUND.SKY, skyOffset, resolution * skySpeed * playerY);
+    Render.background(ctx, background, width, height, BACKGROUND.HILLS, hillOffset, resolution * hillSpeed * playerY);
+    Render.background(ctx, background, width, height, BACKGROUND.TREES, treeOffset, resolution * treeSpeed * playerY);
     n = 0;
     while (n < drawDistance) {
       segment = segments[(baseSegment.index + n) % segments.length];
       segment.looped = segment.index < baseSegment.index;
       segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
-      Util.project(segment.p1, (playerX * roadWidth) - x, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
-      Util.project(segment.p2, (playerX * roadWidth) - x - dx, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Util.project(segment.p1, (playerX * roadWidth) - x, playerY + camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      Util.project(segment.p2, (playerX * roadWidth) - x - dx, playerY + camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
       x = x + dx;
       dx = dx + segment.curve;
       n++;
-      if ((segment.p1.camera.z <= camDepth) || (segment.p2.screen.y >= maxy)) {
+      if ((segment.p1.camera.z <= camDepth) || (segment.p2.screen.y >= segment.p1.screen.y) || (segment.p2.screen.y >= maxy)) {
         continue;
       }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
       maxy = segment.p2.screen.y;
     }
-    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, height, speed * (keyLeft ? -1 : keyRight ? 1 : 0), 0);
+    Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, (height / 2) - (camDepth / playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent) * height / 2), speed * (keyLeft ? -1 : keyRight ? 1 : 0), playerSegment.p2.world.y - playerSegment.p1.world.y);
   };
-  addSegment = function(curve) {
+  lastY = function() {
+    if (segments.length === 0) {
+      return 0;
+    } else {
+      return segments[segments.length - 1].p2.world.y;
+    }
+  };
+  addSegment = function(curve, y) {
     var n;
     n = segments.length;
     segments.push({
       index: n,
       p1: {
         world: {
+          y: lastY(),
           z: n * segmentLength
         },
         camera: {},
@@ -128,6 +145,7 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       },
       p2: {
         world: {
+          y: y,
           z: (n + 1) * segmentLength
         },
         camera: {},
@@ -137,59 +155,82 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       color: Math.floor(n / rumbleLength) % 2 ? COLORS.DARK : COLORS.LIGHT
     });
   };
-  addRoad = function(enter, hold, leave, curve) {
-    var nEnter, nHold, nLeave, _results;
+  addRoad = function(enter, hold, leave, curve, y) {
+    var endY, nEnter, nHold, nLeave, startY, total;
+    startY = lastY();
+    endY = startY + (Util.toInt(y, 0) * segmentLength);
+    total = enter + hold + leave;
     nEnter = 0;
     nHold = 0;
     nLeave = 0;
     while (nEnter < enter) {
-      addSegment(Util.easeIn(0, curve, nEnter / enter));
+      addSegment(Util.easeIn(0, curve, nEnter / enter), Util.easeInOut(startY, endY, nEnter / total));
       nEnter++;
     }
     while (nHold < hold) {
-      addSegment(curve);
+      addSegment(curve, Util.easeInOut(startY, endY, (enter + nHold) / total));
       nHold++;
     }
-    _results = [];
     while (nLeave < leave) {
-      addSegment(Util.easeInOut(curve, 0, nLeave / leave));
-      _results.push(nLeave++);
+      addSegment(Util.easeInOut(curve, 0, nLeave / leave), Util.easeInOut(startY, endY, (enter + hold + nLeave) / total));
+      nLeave++;
     }
-    return _results;
   };
   addStraight = function(n) {
     var num;
     num = n || ROAD.LENGTH.MEDIUM;
-    addRoad(num, num, num, 0);
+    addRoad(num, num, num, 0, 0);
   };
-  addCurve = function(n, c) {
-    var curve, num;
+  addHill = function(n, h) {
+    var num, _height;
+    num = n || ROAD.LENGTH.MEDIUM;
+    _height = h || ROAD.HILL.MEDIUM;
+    addRoad(num, num, num, 0, _height);
+  };
+  addCurve = function(n, c, h) {
+    var curve, num, _height;
     num = n || ROAD.LENGTH.MEDIUM;
     curve = c || ROAD.CURVE.MEDIUM;
-    addRoad(num, num, num, curve);
+    _height = h || ROAD.HILL.NONE;
+    addRoad(num, num, num, curve, _height);
+  };
+  addLowRollingHills = function(n, h) {
+    var num, _height;
+    num = n || ROAD.LENGTH.SHORT;
+    _height = h || ROAD.HILL.LOW;
+    addRoad(num, num, num, 0, _height / 2);
+    addRoad(num, num, num, 0, -_height);
+    addRoad(num, num, num, 0, _height);
+    addRoad(num, num, num, 0, 0);
+    addRoad(num, num, num, 0, _height / 2);
+    addRoad(num, num, num, 0, 0);
   };
   addSCurves = function() {
-    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY);
-    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM);
-    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.EASY);
-    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY);
-    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.MEDIUM);
+    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY, ROAD.HILL.NONE);
+    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM, ROAD.HILL.MEDIUM);
+    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.CURVE.EASY, -ROAD.HILL.LOW);
+    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.EASY, ROAD.HILL.MEDIUM);
+    addRoad(ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, ROAD.LENGTH.MEDIUM, -ROAD.CURVE.MEDIUM, -ROAD.HILL.MEDIUM);
+  };
+  addDownhillToEnd = function(n) {
+    var num;
+    num = n || 200;
+    addRoad(num, num, num, -ROAD.CURVE.EASY, -lastY() / segmentLength);
   };
   resetRoad = function() {
     var nRumble;
     segments = [];
-    addStraight(ROAD.LENGTH.SHORT / 4);
-    addSCurves();
-    addStraight(ROAD.LENGTH.LONG);
-    addCurve(ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM);
-    addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM);
+    addStraight(ROAD.LENGTH.SHORT / 2);
+    addHill(ROAD.LENGTH.SHORT, ROAD.HILL.LOW);
+    addLowRollingHills();
+    addCurve(ROAD.LENGTH.MEDIUM, ROAD.CURVE.MEDIUM, ROAD.HILL.LOW);
+    addLowRollingHills();
+    addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM, ROAD.HILL.MEDIUM);
     addStraight();
-    addSCurves();
-    addCurve(ROAD.LENGTH.LONG, -ROAD.CURVE.MEDIUM);
-    addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM);
+    addCurve(ROAD.LENGTH.LONG, ROAD.CURVE.MEDIUM, -ROAD.HILL.LOW);
+    addHill(ROAD.LENGTH.LONG, -ROAD.HILL.MEDIUM);
     addStraight();
-    addSCurves();
-    addCurve(ROAD.LENGTH.LONG, -ROAD.CURVE.EASY);
+    addDownhillToEnd();
     segments[findSegment(playerZ).index + 2].color = COLORS.START;
     segments[findSegment(playerZ).index + 3].color = COLORS.START;
     nRumble = 0;

@@ -28,7 +28,7 @@ define([
                 opts[Util.randomInt(0, opts.length  - 1)]
 
             percentRemaining: (n, total)->
-                n % total / total
+                ( n % total ) / total
 
             accelerate:(v, accel, dt)->
                 v + (accel * dt)
@@ -57,6 +57,15 @@ define([
                 result
 
             project: (p, camX, camY, camZ, camDepth, width, height, roadWidth)->
+                #Debugger.element("project", "XXXXXXX")
+                #Debugger.element("camx", camX)
+                #Debugger.element("camY", camY)
+                #Debugger.element("camZ", camZ)
+                #Debugger.element("camDepth", camDepth)
+                #Debugger.element("width", width)
+                #Debugger.element("height", height)
+                #Debugger.element("roadWidth", roadWidth)
+                #Debugger.element("projectEnd", "XXXXXXX")
                 p.camera.x = ( p.world.x or 0 ) - camX
                 p.camera.y = ( p.world.y or 0 ) - camY
                 p.camera.z = ( p.world.z or 0 ) - camZ
@@ -65,6 +74,7 @@ define([
                 p.screen.x = Math.round((width/2) + (p.screen.scale * p.camera.x * width/2))
                 p.screen.y = Math.round((height/2) - (p.screen.scale * p.camera.y * height/2))
                 p.screen.w = Math.round(( p.screen.scale * roadWidth * width/2 ))
+                #Debugger.element("p-screen", p.screen)
                 return
 
             overlap:(x1, w1, x2, w2, percent)->

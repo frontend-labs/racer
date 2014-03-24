@@ -34,7 +34,7 @@ define(['../lib/debugger'], function(Debugger) {
       return opts[Util.randomInt(0, opts.length - 1)];
     },
     percentRemaining: function(n, total) {
-      return n % total / total;
+      return (n % total) / total;
     },
     accelerate: function(v, accel, dt) {
       return v + (accel * dt);

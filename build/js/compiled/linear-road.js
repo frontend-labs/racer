@@ -73,8 +73,8 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
       Util.project(segment.p1, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
       Util.project(segment.p2, playerX * roadWidth, camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
+      n++;
       if ((segment.p1.camera.z <= camDepth) || (segment.p2.screen.y >= maxy)) {
-        n++;
         continue;
       }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);

@@ -120,8 +120,8 @@ define([
                 #======
                 #ever makes the next segment of road
                 #this conditional ever return true for create more segments when looping
+                n++
                 if (segment.p1.camera.z <= camDepth) or ( segment.p2.screen.y >= maxy )
-                    n++
                     continue
 
                 Render.segment ctx, width, lanes,
