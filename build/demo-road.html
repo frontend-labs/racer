@@ -47,6 +47,12 @@ body, *          { font-family: Arial, Helvetica, sans-serif; }
      <tr><td id="fps" colspan="2" align="right"></td></tr>
     </table>
         <div id="racer">
+            <div id="hud">
+              <span id="speed"            class="hud"><span id="speed_value" class="value">0</span> mph</span>
+              <span id="current_lap_time" class="hud">Time: <span id="current_lap_time_value" class="value">0.0</span></span> 
+              <span id="last_lap_time"    class="hud">Last Lap: <span id="last_lap_time_value" class="value">0.0</span></span>
+              <span id="fast_lap_time"    class="hud">Fastest Lap: <span id="fast_lap_time_value" class="value">0.0</span></span>
+            </div>
             <canvas id="canvas">
               Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
             </canvas>

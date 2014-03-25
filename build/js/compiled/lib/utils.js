@@ -76,7 +76,7 @@ define(['../lib/debugger'], function(Debugger) {
     },
     overlap: function(x1, w1, x2, w2, percent) {
       var half, max1, max2, min1, min2;
-      half = ppercent || 1 / 2;
+      half = percent || 1 / 2;
       min1 = x1 - (w1 * half);
       max1 = x1 + (w1 * half);
       min2 = x2 - (w2 * half);

@@ -78,7 +78,7 @@ define([
                 return
 
             overlap:(x1, w1, x2, w2, percent)->
-                half = ppercent or 1/2
+                half = percent or 1/2
                 min1 = x1 - (w1 * half)
                 max1 = x1 + (w1 * half)
                 min2 = x2 - (w2 * half)
