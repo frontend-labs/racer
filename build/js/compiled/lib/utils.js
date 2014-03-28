@@ -66,15 +66,6 @@ define(['../lib/debugger'], function(Debugger) {
       return result;
     },
     project: function(p, camX, camY, camZ, camDepth, width, height, roadWidth) {
-      Debugger.element("project", "XXXXXXX");
-      Debugger.element("camx", camX);
-      Debugger.element("camY", camY);
-      Debugger.element("camZ", camZ);
-      Debugger.element("camDepth", camDepth);
-      Debugger.element("width", width);
-      Debugger.element("height", height);
-      Debugger.element("roadWidth", roadWidth);
-      Debugger.element("projectEnd", "XXXXXXX");
       p.camera.x = (p.world.x || 0) - camX;
       p.camera.y = (p.world.y || 0) - camY;
       p.camera.z = (p.world.z || 0) - camZ;

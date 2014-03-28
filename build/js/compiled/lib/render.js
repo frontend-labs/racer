@@ -2,7 +2,6 @@ define(['../lib/utils', '../lib/debugger', '../settings/colors', '../settings/sp
   var Render;
   Render = {
     polygon: function(ctx, x1, y1, x2, y2, x3, y3, x4, y4, color) {
-      Debugger.element("polygon", "polygon: x1:" + x1 + ",y1:" + y1 + ",x2:" + x2 + ",y2:" + y2 + ",x3:" + x3 + ",y3:" + y3 + ",x4:" + x4 + ",y4:" + y4 + ",color:" + color);
       ctx.fillStyle = color;
       ctx.beginPath();
       ctx.moveTo(x1, y1);
@@ -14,7 +13,6 @@ define(['../lib/utils', '../lib/debugger', '../settings/colors', '../settings/sp
     },
     segment: function(ctx, width, lanes, x1, y1, w1, x2, y2, w2, fog, color) {
       var l1, l2, lane, lanew1, lanew2, lanex1, lanex2, r1, r2;
-      Debugger.element('Render-segment', "Render Segment: x1: " + x1 + ",y1: " + y1 + " ,x2: " + x2 + " ,y2: " + y2 + " ,w2: " + w2 + " ,fog: " + fog + " ,color: " + color);
       r1 = Render.rumbleWidth(w1, lanes);
       r2 = Render.rumbleWidth(w2, lanes);
       l1 = Render.laneMarkerWidth(w1, lanes);
@@ -64,9 +62,9 @@ define(['../lib/utils', '../lib/debugger', '../settings/colors', '../settings/sp
       destH = (sprite.h * scale * width / 2) * (SPRITES.SCALE * roadWidth);
       destX = destX + (destW * (offsetX || 0));
       destY = destY + (destH * (offsetY || 0));
-      clipH = clipY ? Math.max(0, destY + destH + clipY) : 0;
+      clipH = clipY ? Math.max(0, destY + destH - clipY) : 0;
       if (clipH < destH) {
-        return ctx.drawImage(sprites, sprite.x, sprite.y, sprite.w, sprite.h - (sprite.h * clipH / destH), destX, destY, destW, destH - clipH);
+        ctx.drawImage(sprites, sprite.x, sprite.y, sprite.w, sprite.h - (sprite.h * clipH / destH), destX, destY, destW, destH - clipH);
       }
     },
     player: function(ctx, width, height, resolution, roadWidth, sprites, speedPercent, scale, destX, destY, steer, updown) {
@@ -79,7 +77,7 @@ define(['../lib/utils', '../lib/debugger', '../settings/colors', '../settings/sp
       } else {
         sprite = updown > 0 ? SPRITES.PLAYER_UPHILL_STRAIGHT : SPRITES.PLAYER_STRAIGHT;
       }
-      return Render.sprite(ctx, width, height, resolution, roadWidth, sprites, sprite, scale, destX, destY + bounce, -0.5, -1);
+      Render.sprite(ctx, width, height, resolution, roadWidth, sprites, sprite, scale, destX, destY + bounce, -0.5, -1);
     },
     fog: function(ctx, x, y, width, height, fog) {
       if (fog < 1) {

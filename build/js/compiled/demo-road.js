@@ -263,6 +263,7 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       segment = segments[(baseSegment.index + n) % segments.length];
       segment.looped = segment.index < baseSegment.index;
       segment.fog = Util.exponentialFog(n / drawDistance, fogDensity);
+      segment.clip = maxy;
       Util.project(segment.p1, (playerX * roadWidth) - x, playerY + camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
       Util.project(segment.p2, (playerX * roadWidth) - x - dx, playerY + camHeight, position - (segment.looped ? trackLength : 0), camDepth, width, height, roadWidth);
       x = x + dx;
@@ -296,9 +297,6 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
         Render.sprite(ctx, width, height, resolution, roadWidth, sprites, sprite.source, spriteScale, spriteX, spriteY, (sprite.offset < 0 ? -1 : 0), -1, segment.clip);
         nSegmentSprite++;
       }
-      Debugger.element('segmentiii', segment);
-      Debugger.element('playerSegmentii', playerSegment);
-      Debugger.element('que', segment === playerSegment);
       if (segment === playerSegment) {
         Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, (height / 2) - (camDepth / playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent) * height / 2), speed * (keyLeft ? -1 : keyRight ? 1 : 0), playerSegment.p2.world.y - playerSegment.p1.world.y);
       }

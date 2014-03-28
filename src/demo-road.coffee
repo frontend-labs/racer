@@ -291,6 +291,8 @@ define([
                 segment = segments[(baseSegment.index + n) % segments.length]
                 segment.looped = segment.index < baseSegment.index
                 segment.fog = Util.exponentialFog(n/drawDistance, fogDensity)
+                #fix the overlap of sprites
+                segment.clip = maxy
 
                 Util.project segment.p1, 
                              ( playerX * roadWidth ) - x, 
@@ -367,10 +369,6 @@ define([
                         segment.clip
 
                     nSegmentSprite++
-
-                Debugger.element 'segmentiii', segment
-                Debugger.element 'playerSegmentii', playerSegment
-                Debugger.element('que', segment == playerSegment)
 
                 if segment is playerSegment
                     Render.player ctx, width, height, resolution, roadWidth, sprites,
