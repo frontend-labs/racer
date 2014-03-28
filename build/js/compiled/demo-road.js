@@ -86,7 +86,7 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     }
   };
   update = function(dt) {
-    var car, carW, dx, nPSegment, nPSegmentCar, playerSegment, playerW, speedPercent, sprite, spriteW, startPosition;
+    var dx, nPSegment, nPSegmentCar, playerSegment, playerW, speedPercent, startPosition, _car, _carW, _sprite, _spriteW;
     playerSegment = findSegment(position + playerZ);
     playerW = SPRITES.PLAYER_STRAIGHT.w * SPRITES.SCALE;
     speedPercent = speed / maxSpeed;
@@ -107,18 +107,15 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     } else {
       speed = Util.accelerate(speed, decel, dt);
     }
-    skyOffset = Util.increase(skyOffset, skySpeed * playerSegment.curve * speedPercent, 1);
-    hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * speedPercent, 1);
-    treeOffset = Util.increase(treeOffset, treeSpeed * playerSegment.curve * speedPercent, 1);
     if ((playerX < -1) || (playerX > 1)) {
       if (speed > offRoadLimit) {
         speed = Util.accelerate(speed, offRoadDecel, dt);
       }
       nPSegment = 0;
       while (nPSegment < playerSegment.sprites.length) {
-        sprite = playerSegment.sprites[nPSegment];
-        spriteW = sprite.source.w * SPRITES.SCALE;
-        if (Util.overlap(playerX, playerW, sprite.offset + spriteW / 2 * (sprite.offset > 0 ? 1 : -1), spriteW)) {
+        _sprite = playerSegment.sprites[nPSegment];
+        _spriteW = _sprite.source.w * SPRITES.SCALE;
+        if (Util.overlap(playerX, playerW, _sprite.offset + _spriteW / 2 * (_sprite.offset > 0 ? 1 : -1), _spriteW)) {
           speed = maxSpeed / 5;
           position = Util.increase(playerSegment.p1.world.z, -playerZ, trackLength);
           break;
@@ -128,34 +125,37 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     }
     nPSegmentCar = 0;
     while (nPSegmentCar < playerSegment.cars.length) {
-      car = playerSegment.cars[nPSegmentCar];
-      carW = car.sprite.w * SPRITES.SCALE;
-      if (speed > car.speed) {
-        if (Util.overlap(playerX, playerW, car.offset, carW, 0.8)) {
-          speed = car.speed * (car.speed / speed);
-          position = Util.increase(car.z, -playerZ, trackLength);
+      _car = playerSegment.cars[nPSegmentCar];
+      _carW = _car.sprite.w * SPRITES.SCALE;
+      if (speed > _car.speed) {
+        if (Util.overlap(playerX, playerW, _car.offset, _carW, 0.8)) {
+          speed = _car.speed * (_car.speed / speed);
+          position = Util.increase(_car.z, -playerZ, trackLength);
           break;
         }
       }
       nPSegmentCar++;
     }
-    playerX = Util.limit(playerX, -2, 2);
+    playerX = Util.limit(playerX, -3, 3);
     speed = Util.limit(speed, 0, maxSpeed);
+    skyOffset = Util.increase(skyOffset, skySpeed * playerSegment.curve * (position - startPosition) / segmentLength, 1);
+    hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * (position - startPosition) / segmentLength, 1);
+    treeOffset = Util.increase(treeOffset, treeSpeed * playerSegment.curve * (position - startPosition) / segmentLength, 1);
     if (position > playerZ) {
       if (currentLapTime && (startPosition < playerZ)) {
         lastLapTime = currentLapTime;
         currentLapTime = 0;
-        if (lastLapTime <= Util.toFloat(Dom.storage.fast_lap_time)) {
-          Dom.storage.fast_lap_time = lastLapTime;
+        if (lastLapTime <= Util.toFloat(DOM.storage.fast_lap_time)) {
+          DOM.storage.fast_lap_time = lastLapTime;
           updateHud('fast_lap_time', formatTime(lastLapTime));
-          Dom.addClassName('fast_lap_time', 'fastest');
-          Dom.addClassName('last_lap_time', 'fastest');
+          DOM.addClassName('fast_lap_time', 'fastest');
+          DOM.addClassName('last_lap_time', 'fastest');
         } else {
-          Dom.removeClassName('fast_lap_time', 'fastest');
-          Dom.removeClassName('last_lap_time', 'fastest');
+          DOM.removeClassName('fast_lap_time', 'fastest');
+          DOM.removeClassName('last_lap_time', 'fastest');
         }
         updateHud('last_lap_time', formatTime(lastLapTime));
-        Dom.show('last_lap_time');
+        DOM.show('last_lap_time');
       } else {
         currentLapTime += dt;
       }
@@ -164,24 +164,22 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     updateHud('current_lap_time', formatTime(currentLapTime));
   };
   updateCars = function(dt, playerSegment, playerW) {
-    var car, index, nCars, newSegment, oldSegment, _results;
+    var nCars, __car, _index, _newSegment, _oldSegment;
     nCars = 0;
-    _results = [];
     while (nCars < cars.length) {
-      car = cars[nCars];
-      oldSegment = findSegment(car.z);
-      car.offset = car.offset + updateCarOffset(car, oldSegment, playerSegment, playerW);
-      car.z = Util.increase(car.z, dt * car.speed, trackLength);
-      car.percent = Util.percentRemaining(car.z, segmentLength);
-      newSegment = findSegment(car.z);
-      if (oldSegment !== newSegment) {
-        index = oldSegment.cars.indexOf(car);
-        oldSegment.cars.splice(index, 1);
-        newSegment.cars.push(car);
+      __car = cars[nCars];
+      _oldSegment = findSegment(__car.z);
+      __car.offset = __car.offset + updateCarOffset(__car, _oldSegment, playerSegment, playerW);
+      __car.z = Util.increase(__car.z, dt * __car.speed, trackLength);
+      __car.percent = Util.percentRemaining(__car.z, segmentLength);
+      _newSegment = findSegment(__car.z);
+      if (_oldSegment !== _newSegment) {
+        _index = _oldSegment.cars.indexOf(__car);
+        _oldSegment.cars.splice(_index, 1);
+        _newSegment.cars.push(__car);
       }
-      _results.push(nCars++);
+      nCars++;
     }
-    return _results;
   };
   updateCarOffset = function(car, carSegment, playerSegment, playerW) {
     var carW, dir, iLook, jSegCar, lookahead, otherCar, otherCarW, segment;
@@ -274,10 +272,10 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
         continue;
       }
       Render.segment(ctx, width, lanes, segment.p1.screen.x, segment.p1.screen.y, segment.p1.screen.w, segment.p2.screen.x, segment.p2.screen.y, segment.p2.screen.w, segment.fog, segment.color);
-      maxy = segment.p2.screen.y;
+      maxy = segment.p1.screen.y;
     }
     nDrawDis = drawDistance - 1;
-    while (nDrawDis--) {
+    while (nDrawDis > 0) {
       segment = segments[(baseSegment.index + nDrawDis) % segments.length];
       nSegmentCar = 0;
       while (nSegmentCar < segment.cars.length) {
@@ -298,9 +296,13 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
         Render.sprite(ctx, width, height, resolution, roadWidth, sprites, sprite.source, spriteScale, spriteX, spriteY, (sprite.offset < 0 ? -1 : 0), -1, segment.clip);
         nSegmentSprite++;
       }
+      Debugger.element('segmentiii', segment);
+      Debugger.element('playerSegmentii', playerSegment);
+      Debugger.element('que', segment === playerSegment);
       if (segment === playerSegment) {
-        Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, (height / 2) - (camDepth / playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent)) * height / 2, speed * (keyLeft ? -1 : keyRight ? 1 : 0), playerSegment.p2.world.y - playerSegment.p1.world.y);
+        Render.player(ctx, width, height, resolution, roadWidth, sprites, speed / maxSpeed, camDepth / playerZ, width / 2, (height / 2) - (camDepth / playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent) * height / 2), speed * (keyLeft ? -1 : keyRight ? 1 : 0), playerSegment.p2.world.y - playerSegment.p1.world.y);
       }
+      nDrawDis--;
     }
   };
   lastY = function() {
@@ -388,9 +390,9 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     _height = h || ROAD.HILL.LOW;
     addRoad(num, num, num, 0, _height / 2);
     addRoad(num, num, num, 0, -_height);
-    addRoad(num, num, num, 0, _height);
+    addRoad(num, num, num, ROAD.CURVE.EASY, _height);
     addRoad(num, num, num, 0, 0);
-    addRoad(num, num, num, 0, _height / 2);
+    addRoad(num, num, num, -ROAD.CURVE.EASY, _height / 2);
     addRoad(num, num, num, 0, 0);
   };
   addSCurves = function() {
@@ -426,7 +428,7 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     addLowRollingHills();
     addCurve(ROAD.LENGTH.LONG * 2, ROAD.CURVE.MEDIUM, ROAD.HILL.MEDIUM);
     addStraight();
-    addCurve(ROAD.LENGTH.MEDIUM, ROAD.HILL.HIGH);
+    addHill(ROAD.LENGTH.MEDIUM, ROAD.HILL.HIGH);
     addSCurves();
     addCurve(ROAD.LENGTH.LONG, -ROAD.CURVE.MEDIUM, ROAD.HILL.NONE);
     addHill(ROAD.LENGTH.LONG, -ROAD.HILL.HIGH);
@@ -451,7 +453,7 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
     return segments[Math.floor(z / segmentLength) % segments.length];
   };
   resetSprites = function() {
-    var interI, nFour, nOne, nThree, nTwo, offset, side, sprite, _results;
+    var interI, nFour, nOne, nThree, nTwo, offset, side, sprite;
     addSprite(20, SPRITES.BILLBOARD07, -1);
     addSprite(40, SPRITES.BILLBOARD06, -1);
     addSprite(60, SPRITES.BILLBOARD08, -1);
@@ -484,7 +486,6 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       nThree += 3;
     }
     nFour = 1000;
-    _results = [];
     while (nFour < (segments.length - 50)) {
       side = Util.randomChoice([1, -1]);
       addSprite(nFour + Util.randomInt(0, 50), Util.randomChoice(SPRITES.BILLBOARDS), -side);
@@ -495,32 +496,29 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
         addSprite(nFour + Util.randomInt(0, 50), sprite, offset);
         interI++;
       }
-      _results.push(nFour += 100);
+      nFour += 100;
     }
-    return _results;
   };
   resetCars = function() {
-    var car, nCars, offset, segment, sprite, z, _results;
+    var car, nCars, segment, _offset, _speed, _sprite, _z;
     cars = [];
     nCars = 0;
-    _results = [];
     while (nCars < totalCars) {
-      offset = Math.random() * Util.randomChoice([-0.8, 0.8]);
-      z = Math.floor(Math.random() * segments.length) * segmentLength;
-      sprite = Util.randomChoice(SPRITES.CARS);
-      speed = maxSpeed / 4 + Math.random() * maxSpeed / (speed === SPRITES.SEMI ? 4 : 2);
+      _offset = Math.random() * Util.randomChoice([-0.8, 0.8]);
+      _z = Math.floor(Math.random() * segments.length) * segmentLength;
+      _sprite = Util.randomChoice(SPRITES.CARS);
+      _speed = maxSpeed / 4 + Math.random() * maxSpeed / (speed === SPRITES.SEMI ? 4 : 2);
       car = {
-        offset: offset,
-        z: z,
-        sprite: sprite,
-        speed: speed
+        offset: _offset,
+        z: _z,
+        sprite: _sprite,
+        speed: _speed
       };
       segment = findSegment(car.z);
       segment.cars.push(car);
       cars.push(car);
-      _results.push(nCars++);
+      nCars++;
     }
-    return _results;
   };
   Game.run({
     canvas: canvas,
@@ -584,6 +582,8 @@ define(['lib/dom', 'lib/utils', 'lib/debugger', 'lib/render', 'lib/game', 'lib/s
       background = images[0];
       sprites = images[1];
       reset();
+      DOM.storage.fast_lap_time = DOM.storage.fast_lap_time || 180;
+      updateHud('fast_lap_time', formatTime(Util.toFloat(DOM.storage.fast_lap_time)));
     }
   });
   reset = function(opts) {

@@ -108,7 +108,7 @@ define([
             dx = dt * 2 * speedPercent
             startPosition = position
 
-            updateCars dt, playerSegment, playerW
+            updateCars( dt, playerSegment, playerW )
 
             position = Util.increase(position, dt * speed, trackLength)
 
@@ -127,10 +127,6 @@ define([
             else
                 speed = Util.accelerate speed, decel, dt
 
-            #Increase the offsets of the sky, hill and tree
-            skyOffset = Util.increase(skyOffset, skySpeed * playerSegment.curve * speedPercent, 1)
-            hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * speedPercent, 1)
-            treeOffset = Util.increase(treeOffset, treeSpeed * playerSegment.curve * speedPercent, 1)
 
             if ( (playerX < -1) or (playerX > 1) )
 
@@ -139,9 +135,9 @@ define([
 
                 nPSegment = 0
                 while nPSegment < playerSegment.sprites.length
-                    sprite = playerSegment.sprites[nPSegment]
-                    spriteW = sprite.source.w * SPRITES.SCALE
-                    if Util.overlap playerX, playerW, sprite.offset + spriteW/2 * (if sprite.offset > 0 then 1 else -1), spriteW
+                    _sprite = playerSegment.sprites[nPSegment]
+                    _spriteW = _sprite.source.w * SPRITES.SCALE
+                    if Util.overlap playerX, playerW, _sprite.offset + _spriteW/2 * (if _sprite.offset > 0 then 1 else -1), _spriteW
                         speed = maxSpeed/5
                         position = Util.increase playerSegment.p1.world.z, -playerZ, trackLength
                         break
@@ -150,33 +146,38 @@ define([
             #render the way of the cars
             nPSegmentCar = 0
             while nPSegmentCar < playerSegment.cars.length
-                car = playerSegment.cars[nPSegmentCar]
-                carW = car.sprite.w * SPRITES.SCALE
-                if speed > car.speed
-                    if Util.overlap playerX, playerW, car.offset, carW, 0.8
-                        speed = car.speed * (car.speed / speed)
-                        position = Util.increase car.z, -playerZ, trackLength
+                _car = playerSegment.cars[nPSegmentCar]
+                _carW = _car.sprite.w * SPRITES.SCALE
+                if speed > _car.speed
+                    if Util.overlap( playerX, playerW, _car.offset, _carW, 0.8 )
+                        speed = _car.speed * (_car.speed/speed)
+                        position = Util.increase _car.z, -playerZ, trackLength
                         break
                 nPSegmentCar++
 
-            playerX = Util.limit playerX, -2, 2 #dont ever let player go too far out the bounds
+            playerX = Util.limit playerX, -3, 3 #dont ever let player go too far out the bounds
             speed = Util.limit speed, 0, maxSpeed
+            
+            #Increase the offsets of the sky, hill and tree
+            skyOffset = Util.increase(skyOffset, skySpeed * playerSegment.curve * (position-startPosition)/segmentLength, 1)
+            hillOffset = Util.increase(hillOffset, hillSpeed * playerSegment.curve * (position-startPosition)/segmentLength, 1)
+            treeOffset = Util.increase(treeOffset, treeSpeed * playerSegment.curve * (position-startPosition)/segmentLength, 1)
 
             if position > playerZ
                 if currentLapTime and (startPosition < playerZ)
                     lastLapTime = currentLapTime
                     currentLapTime = 0
-                    if lastLapTime <= Util.toFloat Dom.storage.fast_lap_time
-                        Dom.storage.fast_lap_time = lastLapTime
+                    if lastLapTime <= Util.toFloat DOM.storage.fast_lap_time
+                        DOM.storage.fast_lap_time = lastLapTime
                         updateHud('fast_lap_time', formatTime(lastLapTime))
-                        Dom.addClassName 'fast_lap_time', 'fastest'
-                        Dom.addClassName 'last_lap_time', 'fastest'
+                        DOM.addClassName 'fast_lap_time', 'fastest'
+                        DOM.addClassName 'last_lap_time', 'fastest'
                     else
-                        Dom.removeClassName 'fast_lap_time', 'fastest'
-                        Dom.removeClassName 'last_lap_time', 'fastest'
+                        DOM.removeClassName 'fast_lap_time', 'fastest'
+                        DOM.removeClassName 'last_lap_time', 'fastest'
 
                     updateHud 'last_lap_time', formatTime lastLapTime
-                    Dom.show 'last_lap_time'
+                    DOM.show 'last_lap_time'
                 else
                     currentLapTime+= dt
 
@@ -187,17 +188,18 @@ define([
         updateCars = (dt, playerSegment, playerW)->
             nCars = 0
             while nCars < cars.length
-                car = cars[nCars]
-                oldSegment = findSegment car.z
-                car.offset = car.offset + updateCarOffset car, oldSegment, playerSegment, playerW
-                car.z = Util.increase car.z, dt * car.speed, trackLength
-                car.percent = Util.percentRemaining car.z, segmentLength
-                newSegment = findSegment car.z
-                if oldSegment isnt newSegment
-                    index = oldSegment.cars.indexOf car
-                    oldSegment.cars.splice index, 1
-                    newSegment.cars.push car
+                __car = cars[nCars]
+                _oldSegment = findSegment(__car.z)
+                __car.offset = __car.offset + updateCarOffset( __car, _oldSegment, playerSegment, playerW )
+                __car.z = Util.increase( __car.z, dt * __car.speed, trackLength )
+                __car.percent = Util.percentRemaining( __car.z, segmentLength )
+                _newSegment = findSegment(__car.z)
+                if _oldSegment isnt _newSegment
+                    _index = _oldSegment.cars.indexOf __car
+                    _oldSegment.cars.splice _index, 1
+                    _newSegment.cars.push __car
                 nCars++
+            return
 
         updateCarOffset = (car, carSegment, playerSegment, playerW)->
 
@@ -206,11 +208,14 @@ define([
 
             if ( carSegment.index - playerSegment.index ) > drawDistance
                 return 0
+
             iLook = 0
             while iLook < lookahead
                 segment = segments[(carSegment.index+iLook)%segments.length]
 
-                if segment is playerSegment and car.speed > speed and Util.overlap playerX, playerW, car.offset, carW, 1.2
+                if segment is playerSegment and
+                   car.speed > speed and 
+                   Util.overlap( playerX, playerW, car.offset, carW, 1.2 )
                     if playerX > 0.5
                         dir = -1
                     else if playerX < -0.5
@@ -223,14 +228,14 @@ define([
                 while jSegCar < segment.cars.length
                     otherCar = segment.cars[jSegCar]
                     otherCarW = otherCar.sprite.w * SPRITES.SCALE
-                    if car.speed > otherCar.speed and Util.overlap car.offset, carW, otherCar.offset, otherCarW, 1.2
+                    if car.speed > otherCar.speed and Util.overlap( car.offset, carW, otherCar.offset, otherCarW, 1.2 )
                         if otherCar.offset > 0.5
                             dir = -1
                         else if otherCar.offset < -0.5
                             dir = 1
                         else
                             dir = (if car.offset > otherCar.offset then 1 else -1)
-                        return dir * 1/iLook * (car.speed - otherCar.speed)/maxSpeed
+                        return dir * 1/iLook * (car.speed-otherCar.speed)/maxSpeed
                     jSegCar++
 
                 iLook++
@@ -264,10 +269,10 @@ define([
         render = ()->
 
             baseSegment = findSegment position
-            basePercent = Util.percentRemaining position, segmentLength
-            playerSegment = findSegment position+playerZ
-            playerPercent = Util.percentRemaining position+playerZ, segmentLength
-            playerY = Util.interpolate playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent
+            basePercent = Util.percentRemaining( position, segmentLength )
+            playerSegment = findSegment( position+playerZ )
+            playerPercent = Util.percentRemaining( position+playerZ, segmentLength )
+            playerY = Util.interpolate(playerSegment.p1.world.y, playerSegment.p2.world.y, playerPercent )
             maxy = height
 
             x = 0
@@ -328,10 +333,10 @@ define([
                                 segment.fog,
                                 segment.color
 
-                maxy = segment.p2.screen.y
+                maxy = segment.p1.screen.y
 
-            nDrawDis = drawDistance - 1
-            while nDrawDis-- 
+            nDrawDis = (drawDistance - 1)
+            while nDrawDis > 0
                 segment = segments[(baseSegment.index + nDrawDis)%segments.length]
 
                 nSegmentCar = 0
@@ -355,19 +360,27 @@ define([
                     spriteScale = segment.p1.screen.scale
                     spriteX = segment.p1.screen.x + (spriteScale * sprite.offset * roadWidth * width/2)
                     spriteY = segment.p1.screen.y
+
                     Render.sprite ctx, width, height, resolution,
                         roadWidth, sprites, sprite.source, spriteScale,
                         spriteX, spriteY, (if sprite.offset < 0 then -1 else 0), -1
                         segment.clip
+
                     nSegmentSprite++
 
-                if segment == playerSegment
+                Debugger.element 'segmentiii', segment
+                Debugger.element 'playerSegmentii', playerSegment
+                Debugger.element('que', segment == playerSegment)
+
+                if segment is playerSegment
                     Render.player ctx, width, height, resolution, roadWidth, sprites,
                         speed/maxSpeed, camDepth/playerZ,
                         width/2,
-                        (height/2) - (camDepth/playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent)) * height/2,
+                        (height/2) - (camDepth/playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent) * height/2),
                         speed * (if keyLeft then -1 else if keyRight then 1 else 0),
                         playerSegment.p2.world.y - playerSegment.p1.world.y
+
+                nDrawDis--
             return
 
         ###################################################
@@ -446,9 +459,9 @@ define([
             _height = h or ROAD.HILL.LOW
             addRoad num, num, num, 0, _height/2
             addRoad num, num, num, 0, -_height
-            addRoad num, num, num, 0, _height
+            addRoad num, num, num, ROAD.CURVE.EASY, _height
             addRoad num, num, num, 0, 0
-            addRoad num, num, num, 0, _height/2
+            addRoad num, num, num, -ROAD.CURVE.EASY, _height/2
             addRoad num, num, num, 0, 0
             return
 
@@ -487,7 +500,7 @@ define([
             addLowRollingHills()
             addCurve ROAD.LENGTH.LONG*2, ROAD.CURVE.MEDIUM, ROAD.HILL.MEDIUM
             addStraight()
-            addCurve ROAD.LENGTH.MEDIUM, ROAD.HILL.HIGH
+            addHill ROAD.LENGTH.MEDIUM, ROAD.HILL.HIGH
             addSCurves()
             addCurve ROAD.LENGTH.LONG, -ROAD.CURVE.MEDIUM, ROAD.HILL.NONE
             addHill ROAD.LENGTH.LONG, -ROAD.HILL.HIGH
@@ -560,24 +573,26 @@ define([
                     addSprite nFour + Util.randomInt(0, 50), sprite, offset
                     interI++
                 nFour+=100
+            return
 
         resetCars = ()->
             cars = []
             nCars = 0
             while nCars < totalCars
-                offset = Math.random() * Util.randomChoice([-0.8, 0.8])
-                z = Math.floor(Math.random() * segments.length) * segmentLength
-                sprite = Util.randomChoice(SPRITES.CARS)
-                speed = maxSpeed/4 + Math.random() * maxSpeed/(if speed == SPRITES.SEMI then 4 else 2)
+                _offset = Math.random() * Util.randomChoice([-0.8, 0.8])
+                _z = Math.floor(Math.random() * segments.length) * segmentLength
+                _sprite = Util.randomChoice(SPRITES.CARS)
+                _speed = maxSpeed/4 + Math.random() * maxSpeed/(if speed == SPRITES.SEMI then 4 else 2)
                 car = 
-                    offset: offset
-                    z: z
-                    sprite: sprite
-                    speed: speed
+                    offset: _offset
+                    z: _z
+                    sprite: _sprite
+                    speed: _speed
                 segment = findSegment(car.z)
                 segment.cars.push(car)
                 cars.push(car)
                 nCars++
+            return
         ###################################################
         #THE GAME LOOP
         ###################################################
@@ -602,6 +617,8 @@ define([
                 background = images[0]
                 sprites = images[1]
                 reset()
+                DOM.storage.fast_lap_time = DOM.storage.fast_lap_time or 180
+                updateHud('fast_lap_time', formatTime(Util.toFloat(DOM.storage.fast_lap_time)))
                 return
         })
 
